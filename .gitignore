@@ -15,3 +15,13 @@
 *.exe
 *.out
 *.app
+
+# makefile generations
+ant/src/.dep
+*.eep
+*.elf
+*.lss
+*.lst
+*.map
+*.sym
+*.hex
