@@ -1,4 +1,4 @@
-#Solider. The verification and reprogramming bench for ants
+#Soldier. The verification and reprogramming bench for ants
 
 runs off of an arduino uno
 
