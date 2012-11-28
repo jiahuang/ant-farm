@@ -1,3 +1,5 @@
+
+
 // testing with code from sparkfun
 /*
     2-8-2008
@@ -11,9 +13,12 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
+#include "uuid.c"
   
 
 #define sbi(var, mask)   ((var) |= (uint8_t)(1 << mask))
@@ -40,6 +45,9 @@ int main (void)
   
   ioinit();
   // PORTA = 0b11111111; 
+
+   PORTA = PORTA | (1<<BUTTON0 ); // flash an LED
+   
   transmit_data(); //Send one packet when we turn on
 
   while(1)
@@ -74,7 +82,12 @@ int main (void)
     delay_ms(200);
      
     transmit_data();
-    data_array[0] = 1;
+    data_array[0] = 1; 
+    data_array[1] = 1;
+    data_array[2] = 1;
+    data_array[3] = 1;
+    data_array[4] = 1;
+
     PORTA = PORTA ^ (1<<BUTTON0 ); // flash an LED
   }
   
@@ -142,3 +155,4 @@ void delay_us(uint8_t x)
 
   while( (TIFR0 & (1<<TOV0)) == 0);
 }
+
