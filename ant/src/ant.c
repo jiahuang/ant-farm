@@ -14,6 +14,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
+  
 
 #define sbi(var, mask)   ((var) |= (uint8_t)(1 << mask))
 #define cbi(var, mask)   ((var) &= (uint8_t)~(1 << mask))
@@ -24,7 +25,7 @@ void ioinit(void);      //Initializes IO
 void delay_ms(uint16_t x); //General purpose delay
 void delay_us(uint8_t x);
 
-uint8_t data_array[4];
+uint8_t data_array[5];
 
 #include "nRF24L01.c"
 //======================
@@ -38,40 +39,43 @@ int main (void)
   uint16_t button_presses = 0;
   
   ioinit();
-  
+  // PORTA = 0b11111111; 
   transmit_data(); //Send one packet when we turn on
 
   while(1)
   {
     
-    if( (PINA & 0x8F) != 0x8F )
-    {
-      button_presses++;
+    // if( (PINA & 0x8F) != 0x8F )
+    // {
+    //   button_presses++;
       
-      data_array[0] = PINA & 0x0F;
-      data_array[0] |= (PINA & 0x80) >> 3;
+    //   data_array[0] = PINA & 0x0F;
+    //   data_array[0] |= (PINA & 0x80) >> 3;
       
-      data_array[1] = button_presses >> 8;
-      data_array[2] = button_presses & 0xFF;
+    //   data_array[1] = button_presses >> 8;
+    //   data_array[2] = button_presses & 0xFF;
 
-      data_array[3] = 0;
+    //   data_array[3] = 0;
 
-      transmit_data();
-    }
+    //   transmit_data();
+    // }
     
-    tx_send_command(0x20, 0x00); //Power down RF
+    // tx_send_command(0x20, 0x00); //Power down RF
 
-    cbi(PORTB, TX_CE); //Go into standby mode
-    sbi(PORTB, TX_CSN); //Deselect chip
+    // cbi(PORTB, TX_CE); //Go into standby mode
+    // sbi(PORTB, TX_CSN); //Deselect chip
     
-    ACSR = (1<<ACD); //Turn off Analog Comparator - this removes about 1uA
+    // ACSR = (1<<ACD); //Turn off Analog Comparator - this removes about 1uA
     // PRR = 0x0F; //Reduce all power right before sleep
     // asm volatile ("sleep");
     //Sleep until a button wakes us up on interrupt
     
     // sleep 5 sec then transmit
-    delay_ms(5000);
+    delay_ms(200);
+     
     transmit_data();
+    data_array[0] = 1;
+    PORTA = PORTA ^ (1<<BUTTON0 ); // flash an LED
   }
   
     return(0);
@@ -80,11 +84,12 @@ int main (void)
 void ioinit (void)
 {
   //1 = Output, 0 = Input
-  DDRA = 0xFF & ~(1<<TX_MISO | 1<<BUTTON0 | 1<<BUTTON1 | 1<<BUTTON2 | 1<<BUTTON3 | 1<<BUTTON4);
+  DDRA = 0xFF & ~(1<<TX_MISO );//| 1<<BUTTON0 | 1<<BUTTON1 | 1<<BUTTON2 | 1<<BUTTON3 | 1<<BUTTON4);
   DDRB = 0b00000110; //(CE on PB1) (CS on PB2)
 
   //Enable pull-up resistors (page 74)
-  PORTA = 0b10001111; //Pulling up a pin that is grounded will cause 90uA current leak
+  PORTA = 0b10001110; //Pulling up a pin that is grounded will cause 90uA current leak
+  // PORTA = 0b11111111; 
 
   cbi(PORTB, TX_CE); //Stand by mode
   

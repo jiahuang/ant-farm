@@ -52,7 +52,7 @@ const uint64_t pipes[1] = { 0xE7E7E7E7E7LL };
 // const char* role_friendly_name[] = { "invalid", "Ping out", "Pong back"};
 
 // The role of the current running sketch
-role_e role = role_pong_back;
+//role_e role = role_pong_back;
 
 void setup(void)
 {
@@ -62,7 +62,7 @@ void setup(void)
 
   Serial.begin(57600);
   printf_begin();
-  printf("\n\rsoilder\n\r");
+  printf("\n\rsoldier\n\r");
   printf("ROLE: Receiver\n\r");
 
   //
@@ -70,9 +70,13 @@ void setup(void)
   //
 
   radio.begin();
-
+  radio.setChannel(2);
+  radio.setPayloadSize(4);
+  radio.setAutoAck(false);
+  radio.setCRCLength(RF24_CRC_8);
+  radio.openReadingPipe(1,0xE7E7E7E7E7LL);
   // optionally, increase the delay between retries & # of retries
-  radio.setRetries(15,15);
+//  radio.setRetries(15,15);
   // radio.setPALevel(RF24_PA_MID);
 //  radio.setDataRate(RF24_250KBPS);
   // optionally, reduce the payload size.  seems to
@@ -80,7 +84,7 @@ void setup(void)
   // radio.setPayloadSize(8);
 
   // read at the pipe
-  radio.openReadingPipe(1,pipes[0]);
+//  radio.openReadingPipe(0,pipes[0]);
  
   //
   // Start listening
@@ -100,6 +104,7 @@ void loop(void)
   // if there is data ready
     if ( radio.available() )
     {
+//      printf("got something");
       // Dump the payloads until we've gotten everything
       unsigned long received_data;
       bool done = false;

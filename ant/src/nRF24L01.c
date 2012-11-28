@@ -35,7 +35,7 @@ uint8_t tx_send_byte(uint8_t cmd);
 //Basic SPI to nRF
 uint8_t tx_send_command(uint8_t cmd, uint8_t data);
 //Sends the 4 bytes of payload
-void tx_send_payload(uint8_t cmd);
+void tx_send_payload(uint8_t cmd, uint8_t size);
 //This sends out the data stored in the data_array
 void transmit_data(void);
 //Basic SPI to nRF
@@ -48,17 +48,30 @@ uint8_t tx_spi_byte(uint8_t outgoing);
 //data_array must be setup before calling this function
 void transmit_data(void)
 {
-  tx_send_command(0x27, 0x7E); //Clear any interrupts
+  tx_send_command(0x27, 0x7E);  //Clear any interrupts
   
-  tx_send_command(W_REGISTER, 0x7A); //Power up and be a transmitter
+//  tx_send_command(0x20,0x7E); //Power up and be a transmitter. 2-byte CRC.
+  tx_send_command(0x20,0b01111010);//Power up and be a transmitter. 1-byte CRC.
 
-  tx_send_byte(0xE1); //Clear TX Fifo
+  tx_send_byte(0xE1);   //Clear TX Fifo
   
-  tx_send_payload(W_TX_PAYLOAD); //Clock in 4 byte payload of data_array
+  tx_send_payload(0xA0,4);  //Clock in 4 byte payload of data_array to TX pipe
 
-  sbi(PORTB, TX_CE); //Pulse CE to start transmission
-  delay_ms(3);
-  cbi(PORTB, TX_CE);
+    sbi(PORTB, TX_CE); //Pulse CE to start transmission
+    delay_ms(3);
+    cbi(PORTB, TX_CE);
+
+  // tx_send_command(0x27, 0x7E); //Clear any interrupts
+  
+  // tx_send_command(W_REGISTER, 0x7A); //Power up and be a transmitter
+
+  // tx_send_byte(0xE1); //Clear TX Fifo
+  
+  // tx_send_payload(W_TX_PAYLOAD); //Clock in 4 byte payload of data_array
+
+  // sbi(PORTB, TX_CE); //Pulse CE to start transmission
+  // delay_ms(3);
+  // cbi(PORTB, TX_CE);
 }
 
 //2.4G Configuration - Transmitter
@@ -67,29 +80,30 @@ uint8_t configure_transmitter(void)
 {
   cbi(PORTB, TX_CE); //Go into standby mode
   
-  tx_send_command(W_REGISTER, 0x78); //CRC enabled, be a transmitter
+  tx_send_command(W_REGISTER, 0x78); //CRC enabled, be a transmitter //0x7E);
 
-  // tx_send_command(0x21, 0x00); //Disable auto acknowledge on all pipes
-  tx_send_command(0x21, 0x03); //enable auto acknowledge on pipes 0, 1
+  tx_send_command(0x21, 0x00); //Disable auto acknowledge on all pipes
+  // tx_send_command(0x21, 0x03); //enable auto acknowledge on pipes 0, 1
 
   // tx_send_command(0x22, 0x00); // disable recieving
 
   tx_send_command(0x23, 0x03); //Set address width to 5bytes (default, not really needed)
 
-  // tx_send_command(0x24, 0x00); //Disable auto-retransmit
-  tx_send_command(0x24, 0x05); // retransmit 5 times w/ a 250uS delay each time
+  tx_send_command(0x24, 0x00); //Disable auto-retransmit
+  // tx_send_command(0x24, 0x05); // retransmit 5 times w/ a 250uS delay each time
 
   tx_send_command(0x25, 0x02); //RF Channel 2
 
-  // tx_send_command(0x26, 0x07); //Air data rate 1Mbit, 0dBm, Setup LNA
+  tx_send_command(0x26, 0x07); //Air data rate 1Mbit, 0dBm, Setup LNA
   // tx_send_command(0x26, 0x01); //Air data rate 1Mbit, -18dBm, Setup LNA
-  tx_send_command(0x26, 0x00); //Air data rate 1Mbit, -18dBm, Setup LNA
+  // tx_send_command(0x26, 0x00); //Air data rate 1Mbit, -18dBm, Setup LNA
 
-  data_array[0] = 0xE7;
+  data_array[0] = 0xE7; //lsb
   data_array[1] = 0xE7;
   data_array[2] = 0xE7;
   data_array[3] = 0xE7;
-  tx_send_payload(0x30); //Set TX address
+  data_array[4] = 0xE7; //msb
+  tx_send_payload(0x30, 5); //Set TX address
   
   tx_send_command(0x20, 0x7A); //Power up, be a transmitter
 
@@ -97,18 +111,19 @@ uint8_t configure_transmitter(void)
 }
 
 //Sends the 4 bytes of payload
-void tx_send_payload(uint8_t cmd)
+void tx_send_payload(uint8_t cmd, uint8_t size)
 {
   uint8_t i;
 
   cbi(PORTB, TX_CSN); //Select chip
   tx_spi_byte(cmd);
   
-  for(i = 0 ; i < 4 ; i++)
+  for(i = 0 ; i < size ; i++)
     tx_spi_byte(data_array[i]);
 
   sbi(PORTB, TX_CSN); //Deselect chip
 }
+
 
 //Sends command to nRF
 uint8_t tx_send_command(uint8_t cmd, uint8_t data)
