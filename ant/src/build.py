@@ -20,6 +20,7 @@ with open("id.c") as f:
 
 # increment the current val
 current_val += INCREMENTATION
+if current_val > MAX_ID: current_val = 0 # wrap around
 print "Incrementing id to: ", current_val
 current_val = hex(current_val).replace("0x", "").upper()
 
