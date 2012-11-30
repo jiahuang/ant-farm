@@ -1,9 +1,9 @@
 # build file for the ant
 
 # set up the id
-MAX_ID = 1099511627775 # FF FF FF FF FF
+MAX_ID = 16777215 # FF FF FF
 INCREMENTATION = 1
-NUM_BYTES = 5
+NUM_BYTES = 4
 
 current_val = 1;
 # read in the current id
