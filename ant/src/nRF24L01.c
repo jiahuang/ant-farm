@@ -32,15 +32,15 @@
 #define W_TX_PAYLOAD  0xA0
 
 //2.4G Configuration - Transmitter
-uint8_t configure_transmitter(void);
+uint8_t configure_transmitter(uint8_t * address);
 //Sends command to nRF
 uint8_t tx_send_byte(uint8_t cmd);
 //Basic SPI to nRF
 uint8_t tx_send_command(uint8_t cmd, uint8_t data);
 //Sends the 4 bytes of payload
-void tx_send_payload(uint8_t cmd, uint8_t size);
+void tx_send_payload(uint8_t cmd, uint8_t size, uint8_t * data);
 //This sends out the data stored in the data_array
-void transmit_data(void);
+void transmit_data(uint8_t * data);
 //Basic SPI to nRF
 uint8_t tx_spi_byte(uint8_t outgoing);
 
@@ -49,7 +49,7 @@ uint8_t tx_spi_byte(uint8_t outgoing);
 
 //This sends out the data stored in the data_array
 //data_array must be setup before calling this function
-void transmit_data(void)
+void transmit_data(uint8_t * data)
 {
   tx_send_command(0x27, 0x7E);  //Clear any interrupts
   
@@ -58,7 +58,7 @@ void transmit_data(void)
 
   tx_send_byte(0xE1);   //Clear TX Fifo
   
-  tx_send_payload(0xA0,4);  //Clock in 4 byte payload of data_array to TX pipe
+  tx_send_payload(0xA0, 4, data);  //Clock in 4 byte payload of data_array to TX pipe
 
     sbi(PORTB, TX_CE); //Pulse CE to start transmission
     delay_ms(3);
@@ -79,7 +79,7 @@ void transmit_data(void)
 
 //2.4G Configuration - Transmitter
 //This sets up one RF-24G for shockburst transmission
-uint8_t configure_transmitter(void)
+uint8_t configure_transmitter(uint8_t * address)
 {
   cbi(PORTB, TX_CE); //Go into standby mode
   
@@ -97,16 +97,11 @@ uint8_t configure_transmitter(void)
 
   tx_send_command(0x25, 0x02); //RF Channel 2
 
-  tx_send_command(0x26, 0x07); //Air data rate 1Mbit, 0dBm, Setup LNA
+  // tx_send_command(0x26, 0x07); //Air data rate 1Mbit, 0dBm, Setup LNA
   // tx_send_command(0x26, 0x01); //Air data rate 1Mbit, -18dBm, Setup LNA
-  // tx_send_command(0x26, 0x00); //Air data rate 1Mbit, -18dBm, Setup LNA
+  tx_send_command(0x26, 0x00); //Air data rate 1Mbit, -18dBm, Setup LNA
 
-  data_array[0] = 0xE7; //lsb
-  data_array[1] = 0xE7;
-  data_array[2] = 0xE7;
-  data_array[3] = 0xE7;
-  data_array[4] = 0xE7; //msb
-  tx_send_payload(0x30, 5); //Set TX address
+  tx_send_payload(0x30, 5, address); //Set TX address
   
   tx_send_command(0x20, 0x7A); //Power up, be a transmitter
 
@@ -114,7 +109,7 @@ uint8_t configure_transmitter(void)
 }
 
 //Sends the 4 bytes of payload
-void tx_send_payload(uint8_t cmd, uint8_t size)
+void tx_send_payload(uint8_t cmd, uint8_t size, uint8_t * data)
 {
   uint8_t i;
 
@@ -122,7 +117,7 @@ void tx_send_payload(uint8_t cmd, uint8_t size)
   tx_spi_byte(cmd);
   
   for(i = 0 ; i < size ; i++)
-    tx_spi_byte(data_array[i]);
+    tx_spi_byte(data[i]);
 
   sbi(PORTB, TX_CSN); //Deselect chip
 }
