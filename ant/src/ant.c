@@ -18,8 +18,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
-//#include "uuid.c"
-  
+#include "id.c"
 
 #define sbi(var, mask)   ((var) |= (uint8_t)(1 << mask))
 #define cbi(var, mask)   ((var) &= (uint8_t)~(1 << mask))
@@ -30,7 +29,11 @@ void ioinit(void);      //Initializes IO
 void delay_ms(uint16_t x); //General purpose delay
 void delay_us(uint8_t x);
 
-uint8_t data_array[5];
+// TX address. RX address needs to be the same as this
+// goes from least significant to most significant
+uint8_t data_pipe[5] = {0xE7, 0xE7, 0xE7, 0xE7, 0xE7};
+// first 4 bytes are the ID, last byte is button press
+uint8_t data_array[4] = {ID_1, ID_2, ID_3, 0x00};
 
 #include "nRF24L01.c"
 //======================
@@ -44,57 +47,41 @@ int main (void)
   uint16_t button_presses = 0;
   
   ioinit();
-  // PORTA = 0b11111111; 
 
-   PORTA = PORTA | (1<<LED ); // flash an LED
+  // PORTA = PORTA | (1<<LED ); // flash an LED
 
-  transmit_data(); //Send one packet when we turn on
-
+  transmit_data(data_array); //Send one packet when we turn on
+  data_array[3] = 0x00; // reset
+    
   while(1)
   {
     
     if( (PINA & 0x8D) != 0x8D )
     {
       // turn on the LED
-      PORTA = PORTA ^ (1<<LED ); // flash an LED
-
-    //   button_presses++;
-      
-    //   data_array[0] = PINA & 0x0F;
-    //   data_array[0] |= (PINA & 0x80) >> 3;
-      
-    //   data_array[1] = button_presses >> 8;
-    //   data_array[2] = button_presses & 0xFF;
-
-    //   data_array[3] = 0;
-
-    //   transmit_data();
+      PORTA = PORTA | (1<<LED );
+      data_array[3] = 0x01;
     }
     
-    // tx_send_command(0x20, 0x00); //Power down RF
+    transmit_data(data_array);
 
-    // cbi(PORTB, TX_CE); //Go into standby mode
-    // sbi(PORTB, TX_CSN); //Deselect chip
+    delay_ms(200);
+    tx_send_command(0x20, 0x00); //Power down RF
+
+    cbi(PORTB, TX_CE); //Go into standby mode
+    sbi(PORTB, TX_CSN); //Deselect chip
     
-    // ACSR = (1<<ACD); //Turn off Analog Comparator - this removes about 1uA
-    // PRR = 0x0F; //Reduce all power right before sleep
-    // asm volatile ("sleep");
+    ACSR = (1<<ACD); //Turn off Analog Comparator - this removes about 1uA
+    PRR = 0x0F; //Reduce all power right before sleep
+    asm volatile ("sleep");
     //Sleep until a button wakes us up on interrupt
     
-    // sleep 5 sec then transmit
-    delay_ms(1000);
-     
-    transmit_data();
-
-    data_array[0] = 1; 
-    data_array[1] = 1;
-    data_array[2] = 1;
-    data_array[3] = 1;
-    data_array[4] = 1;
-
+    
+    // delay_ms(3000);
+    PORTA = PORTA & ~(1<<LED );
   }
   
-    return(0);
+  return(0);
 }
 
 void ioinit (void)
@@ -108,25 +95,10 @@ void ioinit (void)
   PORTA = 0b10001101;
   cbi(PORTB, TX_CE); //Stand by mode
   
-    //Init Timer0 for delay_us
-    TCCR0B = (1<<CS00); //Set Prescaler to No Prescaling (assume we are running at internal 1MHz). CS00=1 
+  //Init Timer0 for delay_us
+  TCCR0B = (1<<CS00); //Set Prescaler to No Prescaling (assume we are running at internal 1MHz). CS00=1 
 
-  /*
-  DDRA = 0xFF;
-  DDRB = 0xFF;
-  while(1)
-  {
-    PORTA = 0xFF;
-    PORTB = 0xFF;
-    delay_ms(3000);
-
-    PORTA = 0x00;
-    PORTB = 0x00;
-    delay_ms(3000);
-  }
-  */
-
-  configure_transmitter();
+  configure_transmitter(data_pipe);
 
   GIFR = (1<<PCIF0); //Enable the Pin Change interrupts to monitor button presses
   GIMSK = (1<<PCIE0); //Enable Pin Change Interrupt Request
