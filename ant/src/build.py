@@ -51,6 +51,6 @@ with open('id.c', 'w') as f:
     i += 1
 
   # pad the rest with zeros
-  while i < 6:
+  while i < NUM_BYTES - i:
     f.write("#define ID_" + str(i) + " 0x00\n")
     i += 1
