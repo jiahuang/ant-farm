@@ -23,11 +23,18 @@
 #define sbi(var, mask)   ((var) |= (uint8_t)(1 << mask))
 #define cbi(var, mask)   ((var) &= (uint8_t)~(1 << mask))
 
+#define UUID_SIZE = 0x05;
+// Note that there are only 128 bytes of EEPROM mem
+#define UUID_EEPROM_START_ADDR = 0;
+
 //Define functions
 //======================
 void ioinit(void);      //Initializes IO
 void delay_ms(uint16_t x); //General purpose delay
 void delay_us(uint8_t x);
+void EEPROM_write(unsigned int ucAddress, uint8_t ucData);
+uint8_t EEPROM_read(unsigned int ucAddress);
+
 
 // TX address. RX address needs to be the same as this
 // goes from least significant to most significant
@@ -48,10 +55,17 @@ int main (void)
   
   ioinit();
 
-  // PORTA = PORTA | (1<<LED ); // flash an LED
-
   transmit_data(data_array); //Send one packet when we turn on
   data_array[3] = 0x00; // reset
+
+  // Write 2 at addr 10
+  EEPROM_write(10, 02);
+  // Read from addr 10
+  data_array[0] = EEPROM_read(10);
+  // Send byte from addr 10
+  transmit_data(data_array);
+  // Turn on a light
+  PORTA = PORTA | (1<<LED );
     
   while(1)
   {
@@ -66,15 +80,16 @@ int main (void)
     transmit_data(data_array);
 
     delay_ms(200);
-    tx_send_command(0x20, 0x00); //Power down RF
+    // tx_send_command(0x20, 0x00); //Power down RF
 
-    cbi(PORTB, TX_CE); //Go into standby mode
-    sbi(PORTB, TX_CSN); //Deselect chip
+    // cbi(PORTB, TX_CE); //Go into standby mode
+    // sbi(PORTB, TX_CSN); //Deselect chip
     
-    ACSR = (1<<ACD); //Turn off Analog Comparator - this removes about 1uA
-    PRR = 0x0F; //Reduce all power right before sleep
-    asm volatile ("sleep");
+    // ACSR = (1<<ACD); //Turn off Analog Comparator - this removes about 1uA
+    // PRR = 0x0F; //Reduce all power right before sleep
+    // asm volatile ("sleep");
     //Sleep until a button wakes us up on interrupt
+
     
     
     // delay_ms(3000);
@@ -128,5 +143,34 @@ void delay_us(uint8_t x)
     TCNT0 = 256 - x; //256 - 125 = 131 : Preload timer 2 for x clicks. Should be 1us per click
 
   while( (TIFR0 & (1<<TOV0)) == 0);
+}
+
+
+void EEPROM_write(unsigned int ucAddress, uint8_t ucData)
+{
+  /* Wait for completion of previous write */
+  while(EECR & (1<<EEPE));
+  /* Set Programming mode */
+  EECR = (0<<EEPM1)|(0<<EEPM0);
+  /* Set up address and data registers */
+  EEAR = ucAddress;
+  EEDR = ucData;
+  /* Write logical one to EEMPE */
+  EECR |= (1<<EEMPE);
+  /* Start eeprom write by setting EEPE */
+  EECR |= (1<<EEPE);
+}
+
+uint8_t EEPROM_read(unsigned int ucAddress)
+{
+/* Wait for completion of previous write */
+while(EECR & (1<<EEPE))
+;
+/* Set up address register */
+EEAR = ucAddress;
+/* Start eeprom read by writing EERE */
+EECR |= (1<<EERE);
+/* Return data from data register */
+return EEDR;
 }
 
