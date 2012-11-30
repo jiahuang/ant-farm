@@ -27,6 +27,7 @@
 
 #define LIKE_BUTTON 0
 #define LED 1
+#define ANALOG_VOLTAGE 2
 
 #define W_REGISTER    0x20
 #define W_TX_PAYLOAD  0xA0
