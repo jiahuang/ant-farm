@@ -18,7 +18,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
-#include "id.c"
+// #include "id.c"
 
 #define sbi(var, mask)   ((var) |= (uint8_t)(1 << mask))
 #define cbi(var, mask)   ((var) &= (uint8_t)~(1 << mask))
@@ -62,12 +62,14 @@ uint8_t EEPROM_read(unsigned int ucAddress); // general function for reading a b
 // goes from least significant to most significant
 uint8_t data_pipe[5] = {0xE7, 0xE7, 0xE7, 0xE7, 0xE7};
 // first 4 bytes are the ID, last byte is button press
-uint8_t data_array[4] = {ID_1, ID_2, ID_3, 0x00};
+uint8_t data_array[4] = {0x00, 0x00, 0x00, 0x00};
 
 // The UUID itself. It can be loaded with load_UUID()
 char UUID[UUID_SIZE];
 
-#include "nRF24L01.c"
+#include "nRF24L01-tx.c"
+#include "nRF24L01-rx.c"
+
 //======================
 ISR(PCINT0_vect)
 {
@@ -76,28 +78,50 @@ ISR(PCINT0_vect)
 
 int main (void)
 {
+  uint8_t incoming;
+
   uint16_t button_presses = 0;
   
   ioinit();
 
   UUID_init();
+  data_array[0] = UUID[0];
+  data_array[1] = UUID[1];
+  data_array[2] = UUID[2];
+  data_array[3] = UUID[3];
 
-  transmit_data(data_array); //Send one packet when we turn on
-  data_array[3] = 0x00; // reset
+  // transmit_data(data_array); //Send one packet when we turn on
+  // data_array[3] = 0x00; // reset
     
   while(1)
   {
     
-    if( (PINA & 0x8D) != 0x8D )
+    incoming = tx_send_byte(0xFF); //Get status register
+    if (incoming & 0x40)
     {
-      // turn on the LED
-      PORTA = PORTA | (1<<LED );
-      data_array[3] = 0x01;
-    }
+      //We have data!
+      receive_data();
+      PORTA = PORTA ^ (1<<LED ); // flash an LED
+    } 
+    // else if (incoming & 0x80){
+      // try and figure out what is in incoming
+    // }
+
+    // if( (PINA & 0x8D) != 0x8D )
+    // {
+    //   // turn on the LED
+    //   PORTA = PORTA | (1<<LED );
+    //   // data_array[3] = 0x01;
+    // }
     
     // transmit_data(data_array);
 
-    delay_ms(10000);
+
+
+    delay_ms(200);
+    
+    DDRA = 0xFF & ~(1<<TX_MISO | 1 << LIKE_BUTTON);//| 1<<BUTTON0 | 1<<BUTTON1 | 1<<BUTTON2 | 1<<BUTTON3 | 1<<BUTTON4);
+
     // tx_send_command(0x20, 0x00); //Power down RF
 
     // cbi(PORTB, TX_CE); //Go into standby mode
@@ -117,6 +141,7 @@ void ioinit (void)
   //1 = Output, 0 = Input
   DDRA = 0xFF & ~(1<<TX_MISO | 1 << LIKE_BUTTON);//| 1<<BUTTON0 | 1<<BUTTON1 | 1<<BUTTON2 | 1<<BUTTON3 | 1<<BUTTON4);
   DDRB = 0b00000110; //(CE on PB1) (CS on PB2)
+  init_nRF_pins();
 
   //Enable pull-up resistors (page 74)
   // PORTA = 0b10001110; //Pulling up a pin that is grounded will cause 90uA current leak
@@ -126,7 +151,9 @@ void ioinit (void)
   //Init Timer0 for delay_us
   TCCR0B = (1<<CS00); //Set Prescaler to No Prescaling (assume we are running at internal 1MHz). CS00=1 
 
-  configure_transmitter(data_pipe);
+  // configure_transmitter(data_pipe);
+
+  configure_receiver(data_pipe);
 
   GIFR = (1<<PCIF0); //Enable the Pin Change interrupts to monitor button presses
   GIMSK = (1<<PCIE0); //Enable Pin Change Interrupt Request
@@ -149,9 +176,7 @@ void UUID_init(void) {
 
     // Write start code since we've written the id now
     write_start_code();
-  } 
-
-  else {
+  } else {
     // We've already created the UUID so just load it
     load_UUID();
   }
