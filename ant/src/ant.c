@@ -62,7 +62,7 @@ uint8_t EEPROM_read(unsigned int ucAddress); // general function for reading a b
 // goes from least significant to most significant
 uint8_t data_pipe[5] = {0xE7, 0xE7, 0xE7, 0xE7, 0xE7};
 // first 4 bytes are the ID, last byte is button press
-uint8_t data_array[4] = {ID_1, ID_2, ID_3, 0x00};
+uint8_t data_array[8] = {ID_1, ID_2, ID_3, ID_4, ID_5, ID_6, ID_7, ID_8};
 
 // The UUID itself. It can be loaded with load_UUID()
 char UUID[UUID_SIZE];
@@ -83,7 +83,7 @@ int main (void)
   UUID_init();
 
   transmit_data(data_array); //Send one packet when we turn on
-  data_array[3] = 0x00; // reset
+  // data_array[3] = 0x00; // reset
     
   while(1)
   {
@@ -92,12 +92,13 @@ int main (void)
     {
       // turn on the LED
       PORTA = PORTA | (1<<LED );
-      data_array[3] = 0x01;
+      //data_array[3] = 0x01;
     }
     
-    // transmit_data(data_array);
+    transmit_data(data_array);
+    PORTA = PORTA ^ (1<<LED ); 
 
-    delay_ms(10000);
+    delay_ms(3000);
     // tx_send_command(0x20, 0x00); //Power down RF
 
     // cbi(PORTB, TX_CE); //Go into standby mode

@@ -68,10 +68,11 @@ void setup(void)
   //
   // Setup and configure rf radio
   //
-
+  Serial.println("Hey");
   radio.begin();
+  Serial.println("It has begined");
   radio.setChannel(2);
-  radio.setPayloadSize(4);
+  radio.setPayloadSize(8);
   radio.setAutoAck(false);
   radio.setCRCLength(RF24_CRC_8);
   radio.openReadingPipe(1,0xE7E7E7E7E7LL);
@@ -89,32 +90,44 @@ void setup(void)
   //
   // Start listening
   //
-
+  Serial.println("About to start listening");
   radio.startListening();
 
   //
   // Dump the configuration of the rf unit for debugging
   //
-
+  Serial.println("Here comes the details");
   radio.printDetails();
+  Serial.println("hey all done here");
 }
 
 void loop(void)
 {
   // if there is data ready
+  //printf("" + radio.available());
     if ( radio.available() )
     {
-//      printf("got something");
+      //Serial.print("Hi");
+      //printf("got something");
       // Dump the payloads until we've gotten everything
-      unsigned long received_data;
+      byte received_data[8];
       bool done = false;
       while (!done)
       {
+//        Serial.print("inner loop ");
         // Fetch the payload, and see if this was the last one.
-        done = radio.read( &received_data, sizeof(unsigned long) );
-
+        done = radio.read( &received_data, 8 );
+//        Serial.println("DONE" + done);
         // Spew it
-        printf("Got payload %lu...",received_data);
+        Serial.print("Got payload: ");
+        
+//        Serial.println(received_data);
+        for (int i = 0; i < 8; i++) {
+          if (received_data[i] <= 0xF)
+            Serial.print("0");
+          Serial.print(received_data[i], HEX); 
+        }
+        Serial.println();
 
         // Delay just a little bit to let the other unit
         // make the transition to receiver

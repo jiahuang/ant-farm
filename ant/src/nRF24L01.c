@@ -59,7 +59,7 @@ void transmit_data(uint8_t * data)
 
   tx_send_byte(0xE1);   //Clear TX Fifo
   
-  tx_send_payload(0xA0, 4, data);  //Clock in 4 byte payload of data_array to TX pipe
+  tx_send_payload(0xA0, 8, data);  //Clock in 4 byte payload of data_array to TX pipe
 
     sbi(PORTB, TX_CE); //Pulse CE to start transmission
     delay_ms(3);
