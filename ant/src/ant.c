@@ -63,7 +63,7 @@ uint8_t EEPROM_read(unsigned int ucAddress); // general function for reading a b
 uint8_t data_pipe[5] = {0xE7, 0xE7, 0xE7, 0xE7, 0xE7};
 // first 4 bytes are the ID, last byte is button press
 uint8_t data_array[4] = {0x00, 0x00, 0x00, 0x00};
-
+uint8_t data_received[4] = {0x00, 0x00, 0x00, 0x00};
 // The UUID itself. It can be loaded with load_UUID()
 char UUID[UUID_SIZE];
 
@@ -85,42 +85,44 @@ int main (void)
   ioinit();
 
   UUID_init();
-  data_array[0] = UUID[0];
-  data_array[1] = UUID[1];
-  data_array[2] = UUID[2];
-  data_array[3] = UUID[3];
+  data_array[0] = 0x05;
+  data_array[1] = 0x05;
+  data_array[2] = 0x05;
+  data_array[3] = 0x05;
 
   // transmit_data(data_array); //Send one packet when we turn on
-  // data_array[3] = 0x00; // reset
     
   while(1)
   {
-    
+
     incoming = tx_send_byte(0xFF); //Get status register
     if (incoming & 0x40)
     {
       //We have data!
-      receive_data();
+      receive_data(data_received);
       PORTA = PORTA ^ (1<<LED ); // flash an LED
-    } 
-    // else if (incoming & 0x80){
-      // try and figure out what is in incoming
-    // }
 
-    // if( (PINA & 0x8D) != 0x8D )
-    // {
-    //   // turn on the LED
-    //   PORTA = PORTA | (1<<LED );
-    //   // data_array[3] = 0x01;
-    // }
+      // pong back a message
+      configure_transmitter(data_pipe);
+      // easy boy
+      delay_ms(10);
+
+      transmit_data(data_array);
+
+      // // wait for transmitting to be done
+      delay_ms(200);
+      // transmit = 1;
+
+      // go back to receiving
+      configure_receiver(data_pipe);
+    } 
     
     // transmit_data(data_array);
 
-
+    // PORTA = PORTA ^ (1<<LED );
 
     delay_ms(200);
-    
-    DDRA = 0xFF & ~(1<<TX_MISO | 1 << LIKE_BUTTON);//| 1<<BUTTON0 | 1<<BUTTON1 | 1<<BUTTON2 | 1<<BUTTON3 | 1<<BUTTON4);
+    // configure_receiver(data_pipe);
 
     // tx_send_command(0x20, 0x00); //Power down RF
 
@@ -141,7 +143,7 @@ void ioinit (void)
   //1 = Output, 0 = Input
   DDRA = 0xFF & ~(1<<TX_MISO | 1 << LIKE_BUTTON);//| 1<<BUTTON0 | 1<<BUTTON1 | 1<<BUTTON2 | 1<<BUTTON3 | 1<<BUTTON4);
   DDRB = 0b00000110; //(CE on PB1) (CS on PB2)
-  init_nRF_pins();
+  // init_nRF_pins();
 
   //Enable pull-up resistors (page 74)
   // PORTA = 0b10001110; //Pulling up a pin that is grounded will cause 90uA current leak
