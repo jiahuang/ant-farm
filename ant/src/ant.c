@@ -48,6 +48,7 @@ void delay_ms(uint16_t x); //General purpose delay
 void delay_us(uint8_t x);
 void UUID_init(void); // creates or loads UUID as appropriate
 void create_uuid(void); // creates a uuid
+void memfill(char* location, int size); // helper, don't use it.
 void reset_uuid(void); // resets the uuid (for debugging)
 int UUID_already_created(void); // boolean to check for start up code
 void write_start_code(void); // write the start up code
@@ -58,15 +59,15 @@ void store_UUID_to_EEPROM(void); // writes the uuid to eeprom
 void EEPROM_write(unsigned int ucAddress, uint8_t ucData); // general function for writing a byte to eeprom
 uint8_t EEPROM_read(unsigned int ucAddress); // general function for reading a byte from eeprom
 
-uint32_t randomIntInRange(uint32_t bottom_limit, uint32_t top_limit);
+uint8_t random_int_in_range(uint8_t low_range, uint8_t high_range) ;
 
 // TX address. RX address needs to be the same as this
 // goes from least significant to most significant
 uint8_t data_pipe[5] = {0xE7, 0xE7, 0xE7, 0xE7, 0xE7};
 // first 4 bytes are the ID, last byte is button press
-uint8_t data_array[8] = {ID_1, ID_2, ID_3, ID_4, ID_5, ID_6, ID_7, ID_8};
+uint8_t data_array[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-uint8_t data_received[4] = {0x00, 0x00, 0x00, 0x00};
+uint8_t data_received[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 // The UUID itself. It can be loaded with load_UUID()
 char UUID[UUID_SIZE];
 
@@ -83,17 +84,12 @@ int main (void)
 {
   uint8_t incoming;
 
-  uint16_t button_presses = 0;
+  uint16_t button_presses = 0;    
   
   ioinit();
-
+  clear_UUID_from_EEPROM();
+  clear_START_CODE_from_EEPROM();
   UUID_init();
-  // data_array[0] = 0x05;
-  // data_array[1] = 0x05;
-  // data_array[2] = 0x05;
-  // data_array[3] = 0x05;
-
-  // transmit_data(data_array); //Send one packet when we turn on
     
   while(1)
   {
@@ -105,10 +101,11 @@ int main (void)
       receive_data(data_received);
       PORTA = PORTA ^ (1<<LED ); // flash an LED
 
-      // pong back a message
+      // get ready to pong back a message
       configure_transmitter(data_pipe);
       // easy boy
       delay_ms(10);
+
       data_array[0] = data_received[0];
       data_array[1] = data_received[1];
       data_array[2] = data_received[2];
@@ -118,28 +115,20 @@ int main (void)
       data_array[6] = UUID[2];
       data_array[7] = UUID[3];
 
-      // transmit_data(data_array);
+      // Send over theping
+      transmit_data(data_array);
 
       // // wait for transmitting to be done
-      delay_ms(200);
+      delay_ms(20);
       // transmit = 1;
 
       // go back to receiving
       configure_receiver(data_pipe);
     }
-    
-    configure_transmitter(data_pipe);
-    // transmit_data(data_array);
-    uint32_t randy = randomIntInRange(100, 2000);
-    transmit_data(randy);
-    PORTA = PORTA ^ (1<<LED ); 
-    // configure_transmitter(data_pipe);
-    // transmit_data(data_array);
-    // PORTA = PORTA ^ (1<<LED ); 
 
-    // PORTA = PORTA ^ (1<<LED );
 
-    delay_ms(3000);
+    // Delay a rando amount of time (the UUID)
+    delay_ms(UUID[0]);
     // configure_receiver(data_pipe);
     // tx_send_command(0x20, 0x00); //Power down RF
 
@@ -406,10 +395,6 @@ EECR |= (1<<EERE);
 return EEDR;
 }
 
-uint32_t randomIntInRange(uint32_t bottom_limit, uint32_t top_limit) {
-
-  // all zeros map to bottom limit, all ones map to top limit
-  return (bottom_limit + ((top_limit - bottom_limit)^randomByte()));
-
-} 
-
+uint8_t random_int_in_range(uint8_t low_range, uint8_t high_range) {
+  return low_range + ((high_range - low_range) & randomByte());
+}
