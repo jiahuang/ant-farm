@@ -109,6 +109,14 @@ int main (void)
       configure_transmitter(data_pipe);
       // easy boy
       delay_ms(10);
+      data_array[0] = data_received[0];
+      data_array[1] = data_received[1];
+      data_array[2] = data_received[2];
+      data_array[3] = data_received[3];
+      data_array[4] = UUID[0];
+      data_array[5] = UUID[1];
+      data_array[6] = UUID[2];
+      data_array[7] = UUID[3];
 
       // transmit_data(data_array);
 
@@ -119,11 +127,15 @@ int main (void)
       // go back to receiving
       configure_receiver(data_pipe);
     }
+    
     configure_transmitter(data_pipe);
     // transmit_data(data_array);
     uint32_t randy = randomIntInRange(100, 2000);
     transmit_data(randy);
     PORTA = PORTA ^ (1<<LED ); 
+    // configure_transmitter(data_pipe);
+    // transmit_data(data_array);
+    // PORTA = PORTA ^ (1<<LED ); 
 
     // PORTA = PORTA ^ (1<<LED );
 
