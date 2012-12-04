@@ -58,6 +58,8 @@ void store_UUID_to_EEPROM(void); // writes the uuid to eeprom
 void EEPROM_write(unsigned int ucAddress, uint8_t ucData); // general function for writing a byte to eeprom
 uint8_t EEPROM_read(unsigned int ucAddress); // general function for reading a byte from eeprom
 
+uint32_t randomIntInRange(uint32_t bottom_limit, uint32_t top_limit);
+
 // TX address. RX address needs to be the same as this
 // goes from least significant to most significant
 uint8_t data_pipe[5] = {0xE7, 0xE7, 0xE7, 0xE7, 0xE7};
@@ -107,8 +109,16 @@ int main (void)
       configure_transmitter(data_pipe);
       // easy boy
       delay_ms(10);
+      data_array[0] = data_received[0];
+      data_array[1] = data_received[1];
+      data_array[2] = data_received[2];
+      data_array[3] = data_received[3];
+      data_array[4] = UUID[0];
+      data_array[5] = UUID[1];
+      data_array[6] = UUID[2];
+      data_array[7] = UUID[3];
 
-      transmit_data(data_array);
+      // transmit_data(data_array);
 
       // // wait for transmitting to be done
       delay_ms(200);
@@ -117,9 +127,15 @@ int main (void)
       // go back to receiving
       configure_receiver(data_pipe);
     }
+    
     configure_transmitter(data_pipe);
-    transmit_data(data_array);
+    // transmit_data(data_array);
+    uint32_t randy = randomIntInRange(100, 2000);
+    transmit_data(randy);
     PORTA = PORTA ^ (1<<LED ); 
+    // configure_transmitter(data_pipe);
+    // transmit_data(data_array);
+    // PORTA = PORTA ^ (1<<LED ); 
 
     // PORTA = PORTA ^ (1<<LED );
 
@@ -389,4 +405,11 @@ EECR |= (1<<EERE);
 /* Return data from data register */
 return EEDR;
 }
+
+uint32_t randomIntInRange(uint32_t bottom_limit, uint32_t top_limit) {
+
+  // all zeros map to bottom limit, all ones map to top limit
+  return (bottom_limit + ((top_limit - bottom_limit)^randomByte()));
+
+} 
 
