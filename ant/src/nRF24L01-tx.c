@@ -21,7 +21,8 @@
 
 #define LIKE_BUTTON 0
 #define LED 1
-#define ANALOG_VOLTAGE 2
+#define LED2 2
+#define ANALOG_VOLTAGE 3
 
 #define RX_DR 6
 #define TX_DS 5
