@@ -19,15 +19,13 @@
 //#define RF_DELAY  5
 #define RF_DELAY  55
 
-#define BUTTON0 0
-#define BUTTON1 1
-#define BUTTON2 2
-#define BUTTON3 3
-#define BUTTON4 7
-
 #define LIKE_BUTTON 0
 #define LED 1
 #define ANALOG_VOLTAGE 2
+
+#define RX_DR 6
+#define TX_DS 5
+#define MAX_RT 4
 
 #define W_REGISTER    0x20
 #define W_TX_PAYLOAD  0xA0
