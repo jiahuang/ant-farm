@@ -50,6 +50,7 @@ void delay_ms(uint16_t x); //General purpose delay
 void delay_us(uint8_t x);
 void UUID_init(void); // creates or loads UUID as appropriate
 void create_uuid(void); // creates a uuid
+int pint_poing(void);
 void memfill(char* location, int size); // helper, don't use it.
 void reset_uuid(void); // resets the uuid (for debugging)
 int UUID_already_created(void); // boolean to check for start up code
@@ -79,65 +80,64 @@ char UUID[UUID_SIZE];
 //======================
 ISR(PCINT1_vect)
 {
-  //This vector is only here to wake unit up from sleep mode
+  // wake up from sleep mode
+  // 1) read payload through SPI
+  while( ping_pong()) {
+    // 2) clear RX_DR IRQ
+    tx_send_command(0x27, (1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT));
+    // 3) read FIFO_STATUS to check if there are more payloads available in RX FIFO
+    // 4) if there are more data in RX FIFO, repeat from step 1)
+  }
+}
+
+int ping_pong(void) 
+{
+  uint8_t incoming = 0;
+  incoming = tx_send_byte(0xFF); //Get status register
+  if (incoming & 0x40)
+  {
+    //We have data!
+    receive_data(data_received);
+    PORTA = PORTA ^ (1<<LED ); // flash an LED
+
+    // get ready to pong back a message
+    configure_transmitter(data_pipe);
+
+    data_array[0] = data_received[0];
+    data_array[1] = data_received[1];
+    data_array[2] = data_received[2];
+    data_array[3] = data_received[3];
+    data_array[4] = UUID[0];
+    data_array[5] = UUID[1];
+    data_array[6] = UUID[2];
+    data_array[7] = UUID[3];
+
+    delay_ms(UUID[0]);
+    
+    // Send over theping
+    transmit_data(data_array);
+
+    // // wait for transmitting to be done
+    delay_ms(10);
+    // go back to receiving
+    configure_receiver(data_pipe);
+  }
+  return incoming;
 }
 
 int main (void)
-{
-  uint8_t incoming;
-
-  uint16_t button_presses = 0;    
-  
+{  
   ioinit();
-  clear_UUID_from_EEPROM();
-  clear_START_CODE_from_EEPROM();
+  // clear_UUID_from_EEPROM();
+  // clear_START_CODE_from_EEPROM();
   UUID_init();
-    
+  ACSR = (1<<ACD); //Turn off Analog Comparator - this removes about 1uA
+
   while(1)
   {
 
-    incoming = tx_send_byte(0xFF); //Get status register
-    if (incoming & 0x40)
-    {
-      //We have data!
-      receive_data(data_received);
-      PORTA = PORTA ^ (1<<LED ); // flash an LED
+    ping_pong();
 
-      // get ready to pong back a message
-      configure_transmitter(data_pipe);
-      // easy boy
-      delay_ms(10);
-
-      data_array[0] = data_received[0];
-      data_array[1] = data_received[1];
-      data_array[2] = data_received[2];
-      data_array[3] = data_received[3];
-      data_array[4] = UUID[0];
-      data_array[5] = UUID[1];
-      data_array[6] = UUID[2];
-      data_array[7] = UUID[3];
-
-      // Send over theping
-      transmit_data(data_array);
-
-      // // wait for transmitting to be done
-      delay_ms(20);
-      // transmit = 1;
-
-      // go back to receiving
-      configure_receiver(data_pipe);
-    }
-
-
-    // Delay a rando amount of time (the UUID)
-    delay_ms(UUID[0]);
-    // configure_receiver(data_pipe);
-    // tx_send_command(0x20, 0x00); //Power down RF
-
-    // cbi(PORTB, TX_CE); //Go into standby mode
-    // sbi(PORTB, TX_CSN); //Deselect chip
-    
-    ACSR = (1<<ACD); //Turn off Analog Comparator - this removes about 1uA
     PRR = 0x0F; //Reduce all power right before sleep
     asm volatile ("sleep");
     //Sleep until a button wakes us up on interrupt
