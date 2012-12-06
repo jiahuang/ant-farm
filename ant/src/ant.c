@@ -40,6 +40,8 @@
 #define START_UUID_ADDRESS (sizeof(START_UP_STRING_CODE) + 1)
 // The size, in bytes, of the UUID
 #define UUID_SIZE  4
+// The pin register associated with the nRF24 IRQ pin
+#define NRF_IRQ 0
 
 //Define functions
 //======================
@@ -75,7 +77,7 @@ char UUID[UUID_SIZE];
 #include "nRF24L01-rx.c"
 
 //======================
-ISR(PCINT0_vect)
+ISR(PCINT1_vect)
 {
   //This vector is only here to wake unit up from sleep mode
 }
@@ -135,9 +137,9 @@ int main (void)
     // cbi(PORTB, TX_CE); //Go into standby mode
     // sbi(PORTB, TX_CSN); //Deselect chip
     
-    // ACSR = (1<<ACD); //Turn off Analog Comparator - this removes about 1uA
-    // PRR = 0x0F; //Reduce all power right before sleep
-    // asm volatile ("sleep");
+    ACSR = (1<<ACD); //Turn off Analog Comparator - this removes about 1uA
+    PRR = 0x0F; //Reduce all power right before sleep
+    asm volatile ("sleep");
     //Sleep until a button wakes us up on interrupt
   }
   
@@ -163,9 +165,12 @@ void ioinit (void)
 
   configure_receiver(data_pipe);
 
-  GIFR = (1<<PCIF0); //Enable the Pin Change interrupts to monitor button presses
-  GIMSK = (1<<PCIE0); //Enable Pin Change Interrupt Request
-  PCMSK0 = (1<<BUTTON0)|(1<<BUTTON1)|(1<<BUTTON2)|(1<<BUTTON3)|(1<<BUTTON4);
+  GIFR = (1 << PCIF1); // Enable logic interrupt on PCINT 11:8
+  GIMSK = (1 << PCIE1); // Enable pin change interrupt request on PCINT 11:8
+  PCMSK1 = (1 << NRF_IRQ); 
+  // GIFR = (1<<PCIF0); //Enable the Pin Change interrupts to monitor button presses
+  // GIMSK = (1<<PCIE0); //Enable Pin Change Interrupt Request
+  // PCMSK0 = (1<<BUTTON0)|(1<<BUTTON1)|(1<<BUTTON2)|(1<<BUTTON3)|(1<<BUTTON4);
   MCUCR = (1<<SM1)|(1<<SE); //Setup Power-down mode and enable sleep
   
   sei(); //Enable interrupts
