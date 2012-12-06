@@ -80,14 +80,16 @@ char UUID[UUID_SIZE];
 //======================
 ISR(PCINT1_vect)
 {
+  PORTA = PORTA ^ (1<<LED2 ); // flash an LED
   // wake up from sleep mode
   // 1) read payload through SPI
-  while( ping_pong()) {
+  while( ping_pong() & 0x40) {
     // 2) clear RX_DR IRQ
     tx_send_command(0x27, (1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT));
     // 3) read FIFO_STATUS to check if there are more payloads available in RX FIFO
     // 4) if there are more data in RX FIFO, repeat from step 1)
   }
+  PORTA = PORTA ^ (1<<LED2 ); // flash an LED
 }
 
 uint8_t ping_pong(void) 
@@ -96,9 +98,9 @@ uint8_t ping_pong(void)
   incoming = tx_send_byte(0xFF); //Get status register
   if (incoming & 0x40)
   {
+    PORTA = PORTA ^ (1<<LED ); // flash an LED
     //We have data!
     receive_data(data_received);
-    PORTA = PORTA ^ (1<<LED ); // flash an LED
 
     // get ready to pong back a message
     configure_transmitter(data_pipe);
@@ -121,7 +123,10 @@ uint8_t ping_pong(void)
     delay_ms(10);
     // go back to receiving
     configure_receiver(data_pipe);
+    PORTA = PORTA ^ (1<<LED ); // flash an LED
   }
+
+  // delay_ms(100);
   return incoming;
 }
 
@@ -132,15 +137,12 @@ int main (void)
   // clear_START_CODE_from_EEPROM();
   UUID_init();
   ACSR = (1<<ACD); //Turn off Analog Comparator - this removes about 1uA
-
+  PRR = 0x0B; //Reduce everything except timer0
+    
   while(1)
   {
-
     ping_pong();
-
-    PRR = 0x0F; //Reduce all power right before sleep
-    asm volatile ("sleep");
-    //Sleep until a button wakes us up on interrupt
+    asm volatile ("sleep"); //Sleep until a ping wakes us up on interrupt
   }
   
   return(0);
@@ -151,11 +153,7 @@ void ioinit (void)
   //1 = Output, 0 = Input
   DDRA = 0xFF & ~(1<<TX_MISO | 1 << LIKE_BUTTON);//| 1<<BUTTON0 | 1<<BUTTON1 | 1<<BUTTON2 | 1<<BUTTON3 | 1<<BUTTON4);
   DDRB = 0b00000110; //(CE on PB1) (CS on PB2)
-  // init_nRF_pins();
 
-  //Enable pull-up resistors (page 74)
-  // PORTA = 0b10001110; //Pulling up a pin that is grounded will cause 90uA current leak
-  PORTA = 0b10001101;
   cbi(PORTB, TX_CE); //Stand by mode
   
   //Init Timer0 for delay_us
@@ -168,9 +166,6 @@ void ioinit (void)
   GIFR = (1 << PCIF1); // Enable logic interrupt on PCINT 11:8
   GIMSK = (1 << PCIE1); // Enable pin change interrupt request on PCINT 11:8
   PCMSK1 = (1 << NRF_IRQ); 
-  // GIFR = (1<<PCIF0); //Enable the Pin Change interrupts to monitor button presses
-  // GIMSK = (1<<PCIE0); //Enable Pin Change Interrupt Request
-  // PCMSK0 = (1<<BUTTON0)|(1<<BUTTON1)|(1<<BUTTON2)|(1<<BUTTON3)|(1<<BUTTON4);
   MCUCR = (1<<SM1)|(1<<SE); //Setup Power-down mode and enable sleep
   
   sei(); //Enable interrupts
