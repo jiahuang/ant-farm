@@ -50,7 +50,7 @@ void delay_ms(uint16_t x); //General purpose delay
 void delay_us(uint8_t x);
 void UUID_init(void); // creates or loads UUID as appropriate
 void create_uuid(void); // creates a uuid
-int pint_poing(void);
+uint8_t ping_pong(void);
 void memfill(char* location, int size); // helper, don't use it.
 void reset_uuid(void); // resets the uuid (for debugging)
 int UUID_already_created(void); // boolean to check for start up code
@@ -90,7 +90,7 @@ ISR(PCINT1_vect)
   }
 }
 
-int ping_pong(void) 
+uint8_t ping_pong(void) 
 {
   uint8_t incoming = 0;
   incoming = tx_send_byte(0xFF); //Get status register
