@@ -80,7 +80,7 @@ char UUID[UUID_SIZE];
 //======================
 ISR(PCINT1_vect)
 {
-  PORTA = PORTA ^ (1<<LED2 ); // flash an LED
+  // PORTA = PORTA ^ (1<<LED2 ); // flash an LED
   // wake up from sleep mode
   // 1) read payload through SPI
   while( ping_pong() & 0x40) {
@@ -89,7 +89,7 @@ ISR(PCINT1_vect)
     // 3) read FIFO_STATUS to check if there are more payloads available in RX FIFO
     // 4) if there are more data in RX FIFO, repeat from step 1)
   }
-  PORTA = PORTA ^ (1<<LED2 ); // flash an LED
+  // PORTA = PORTA ^ (1<<LED2 ); // flash an LED
 }
 
 uint8_t ping_pong(void) 
@@ -136,6 +136,8 @@ int main (void)
   // clear_UUID_from_EEPROM();
   // clear_START_CODE_from_EEPROM();
   UUID_init();
+  // PORTA = PORTA ^ ( (1 << LED) | (1 << LED2));
+  PORTA = PORTA ^ (1 << LED);
   ACSR = (1<<ACD); //Turn off Analog Comparator - this removes about 1uA
   PRR = 0x0B; //Reduce everything except timer0
     
@@ -153,6 +155,8 @@ void ioinit (void)
   //1 = Output, 0 = Input
   DDRA = 0xFF & ~(1<<TX_MISO | 1 << LIKE_BUTTON);//| 1<<BUTTON0 | 1<<BUTTON1 | 1<<BUTTON2 | 1<<BUTTON3 | 1<<BUTTON4);
   DDRB = 0b00000110; //(CE on PB1) (CS on PB2)
+
+  PORTA = 0b10001110;
 
   cbi(PORTB, TX_CE); //Stand by mode
   
