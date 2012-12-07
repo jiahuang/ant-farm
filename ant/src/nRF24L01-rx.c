@@ -28,14 +28,15 @@ void init_nRF_pins(void)
 
 //Reads the current RX buffer into the data array
 //Forces an RX buffer flush
-void receive_data(uint8_t * data)
+void receive_data(uint8_t * data, uint8_t size)
 {
   cbi(PORTB, TX_CSN); //Stand by mode
-    tx_spi_byte(0x61); //Read RX Payload
-  data[0] = tx_spi_byte(0xFF);
-  data[1] = tx_spi_byte(0xFF);
-  data[2] = tx_spi_byte(0xFF);
-  data[3] = tx_spi_byte(0xFF);
+  tx_spi_byte(0x61); //Read RX Payload
+
+  for (int i = 0; i < size; i++) {
+    data[i] = tx_spi_byte(0xFF);
+  }
+
   sbi(PORTB, TX_CSN);
   
   tx_send_byte(0xE2); //Flush RX FIFO
@@ -59,7 +60,7 @@ void configure_receiver(uint8_t * address)
 
   tx_send_command(0x26, 0x07); //Air data rate 1Mbit, 0dBm, Setup LNA
 
-  tx_send_command(0x31, 0x08); //4 byte receive payload
+  tx_send_command(0x31, 0x08); //8 byte receive payload
 
   tx_send_command(0x25, 0x02); //RF Channel 2 (default, not really needed)
 
