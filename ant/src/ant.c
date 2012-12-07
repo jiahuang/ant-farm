@@ -48,21 +48,7 @@
 void ioinit(void);      //Initializes IO
 void delay_ms(uint16_t x); //General purpose delay
 void delay_us(uint8_t x);
-void UUID_init(void); // creates or loads UUID as appropriate
-void create_uuid(void); // creates a uuid
 uint8_t ping_pong(void);
-void memfill(char* location, int size); // helper, don't use it.
-void reset_uuid(void); // resets the uuid (for debugging)
-int UUID_already_created(void); // boolean to check for start up code
-void write_start_code(void); // write the start up code
-void load_UUID(void); // load the uuid from eeprom
-void clear_UUID_from_EEPROM(void); // clears uuid from eeprom
-void clear_START_CODE_from_EEPROM(void); // clears start code from uuid
-void store_UUID_to_EEPROM(void); // writes the uuid to eeprom
-void EEPROM_write(unsigned int ucAddress, uint8_t ucData); // general function for writing a byte to eeprom
-uint8_t EEPROM_read(unsigned int ucAddress); // general function for reading a byte from eeprom
-
-uint8_t random_int_in_range(uint8_t low_range, uint8_t high_range) ;
 
 // TX address. RX address needs to be the same as this
 // goes from least significant to most significant
@@ -72,7 +58,7 @@ uint8_t data_array[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 uint8_t data_received[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 // The UUID itself. It can be loaded with load_UUID()
-char UUID[UUID_SIZE];
+char UUID[UUID_SIZE] = { ID_1, ID_2, ID_3, ID_4 } ;
 
 #include "nRF24L01-tx.c"
 #include "nRF24L01-rx.c"
@@ -80,7 +66,6 @@ char UUID[UUID_SIZE];
 //======================
 ISR(PCINT1_vect)
 {
-  // PORTA = PORTA ^ (1<<LED2 ); // flash an LED
   // wake up from sleep mode
   // 1) read payload through SPI
   while( ping_pong() & 0x40) {
@@ -89,7 +74,6 @@ ISR(PCINT1_vect)
     // 3) read FIFO_STATUS to check if there are more payloads available in RX FIFO
     // 4) if there are more data in RX FIFO, repeat from step 1)
   }
-  // PORTA = PORTA ^ (1<<LED2 ); // flash an LED
 }
 
 uint8_t ping_pong(void) 
@@ -120,7 +104,7 @@ uint8_t ping_pong(void)
       data_array[6] = UUID[2];
       data_array[7] = UUID[3];
 
-      delay_ms(UUID[0]);
+      delay_ms((UUID[0] * 1000) & 255);
       
       // Send over theping
       transmit_data(data_array);
@@ -139,12 +123,13 @@ uint8_t ping_pong(void)
 
 int main (void)
 {  
+  // Set up all the input and output ports
   ioinit();
-  // clear_UUID_from_EEPROM();
-  // clear_START_CODE_from_EEPROM();
-  UUID_init();
-  // PORTA = PORTA ^ ( (1 << LED) | (1 << LED2));
-  PORTA = PORTA ^ (1 << LED);
+
+  // Turn off the led when it's loaded
+  PORTA = PORTA & ~(1 << LED);
+
+
   ACSR = (1<<ACD); //Turn off Analog Comparator - this removes about 1uA
   PRR = 0x0B; //Reduce everything except timer0
     
@@ -160,10 +145,10 @@ int main (void)
 void ioinit (void)
 {
   //1 = Output, 0 = Input
-  DDRA = 0xFF & ~(1<<TX_MISO | 1 << LIKE_BUTTON);//| 1<<BUTTON0 | 1<<BUTTON1 | 1<<BUTTON2 | 1<<BUTTON3 | 1<<BUTTON4);
+  DDRA = 0xFF & ~(1<<TX_MISO | 1 << LIKE_BUTTON | 1 << ANALOG_VOLTAGE);//| 1<<BUTTON0 | 1<<BUTTON1 | 1<<BUTTON2 | 1<<BUTTON3 | 1<<BUTTON4);
   DDRB = 0b00000110; //(CE on PB1) (CS on PB2)
 
-  PORTA = 0b10001110;
+  PORTA = 0b10001010;
 
   cbi(PORTB, TX_CE); //Stand by mode
   
@@ -180,25 +165,6 @@ void ioinit (void)
   MCUCR = (1<<SM1)|(1<<SE); //Setup Power-down mode and enable sleep
   
   sei(); //Enable interrupts
-}
-
-void UUID_init(void) {
-
-  // Check for a start code to see if we have created a UUID yet
-  if (!UUID_already_created()) {
-
-    // If not, Create it (also loads it into UUID)
-    create_uuid();
-
-    // Save it to EEPROM
-    store_UUID_to_EEPROM();
-
-    // Write start code since we've written the id now
-    write_start_code();
-  } else {
-    // We've already created the UUID so just load it
-    load_UUID();
-  }
 }
 
 //General short delays
@@ -221,191 +187,4 @@ void delay_us(uint8_t x)
     TCNT0 = 256 - x; //256 - 125 = 131 : Preload timer 2 for x clicks. Should be 1us per click
 
   while( (TIFR0 & (1<<TOV0)) == 0);
-}
-
-
-void create_uuid(void) {
-  // Generate a Version 4 UUID according to RFC4122
-  memfill((char*)UUID, 4);
-}
-
-void reset_uuid(void) {
-  clear_UUID_from_EEPROM();
-  clear_START_CODE_from_EEPROM();
-}
-void write_start_code() {
-
-  for (int i = 0; i < sizeof(START_UP_STRING_CODE); i++) {
-    EEPROM_write(START_UP_STRING_CODE_ADDRESS + i, START_UP_STRING_CODE[i]);
-  }
-}
-int UUID_already_created() {
-
-  for (int i = 0; i < sizeof(START_UP_STRING_CODE); i++) {
-      if (EEPROM_read(START_UP_STRING_CODE_ADDRESS + i) != START_UP_STRING_CODE[i]) {
-        return 0;
-      }
-  }
-  return 1;
-}
-
-void load_UUID(void) {
-  for (int i = 0; i < UUID_SIZE; i++) {
-    UUID[i] = EEPROM_read(START_UUID_ADDRESS + i);
-  }
-}
-
-void clear_UUID_from_EEPROM(void) {
-  for (int i = 0; i < UUID_SIZE; i++) {
-    EEPROM_write(START_UUID_ADDRESS + i, '\0');
-  }
-}
-
-void clear_START_CODE_from_EEPROM(void) {
-  for (int i = 0; i < sizeof(START_UP_STRING_CODE); i++) {
-    EEPROM_write(START_UP_STRING_CODE_ADDRESS + i, '\0');
-  }
-}
-
-void store_UUID_to_EEPROM(void) {
-  for (int i = 0; i < UUID_SIZE; i++) {
-    EEPROM_write(START_UUID_ADDRESS + i, UUID[i]);
-  }
-}
-int randomBitRaw(void) {
-  uint8_t copyAdmux, copyAdcsra, copyAdcsrb, copyPorta, copyDdra;
-  uint8_t bit;
-  uint8_t dummy;
-
-  // Store all the registers we'll be playing with
-  copyAdmux = ADMUX;
-  copyAdcsra = ADCSRA;
-  copyAdcsrb = ADCSRB;
-  copyPorta = PORTA;
-  copyDdra = DDRA;
-  
-  // Perform a conversion on Analog0, using the Vcc reference
-  ADMUX =
-(0 << ADLAR)| //10bit precision
-(1 << MUX1)| //use PB4 as input pin
-(0 << REFS0)| //set refs0 and refs1 to 0 to use Vcc as Vref
-(0 << REFS1);
-  
-#if F_CPU > 16000000
-  // ADC is enabled, divide by 32 prescaler
-  ADCSRA = _BV(ADEN) | _BV(ADPS2) | _BV(ADPS0);
-#elif F_CPU > 8000000
-  // ADC is enabled, divide by 16 prescaler
-  ADCSRA = _BV(ADEN) | _BV(ADPS2);
-#else
-  // ADC is enabled, divide by 8 prescaler
-  ADCSRA = _BV(ADEN) | _BV(ADPS1) | _BV(ADPS0);
-#endif
-
-  
-  // Autotriggering disabled
-  ADCSRB = 0;
-
-  //Turn on the third pin of PORTA
-  PORTA |= _BV(ANALOG_VOLTAGE);
-
-
-  PORTA |= _BV(1); //xxxx1x
-
-  // Immediately start a sample conversion on Analog0
-  ADCSRA |= _BV(ADSC);
-
-  // Wait for conversion to complete
-  while (ADCSRA & _BV(ADSC));
-
-  // Xor least significant bits together
-  bit = ADCL;
-
-  // We're ignoring the high bits, but we have to read them before the next conversion
-  dummy = ADCH;
-
-  // Restore register states
-  ADMUX = copyAdmux;
-  ADCSRA = copyAdcsra;
-  ADCSRB = copyAdcsrb;
-  PORTA = copyPorta;
-  DDRA = copyDdra;
-
-  return (bit & 1);
-
-}
-
-int randomBitRaw2(void) {
-  // Software whiten bits using Von Neumann algorithm
-  //
-  // von Neumann, John (1951). "Various techniques used in connection
-  // with random digits". National Bureau of Standards Applied Math Series
-  // 12:36.
-  //
-  for(;;) {
-    int a = randomBitRaw() | (randomBitRaw()<<1);
-    if (a==1) return 0; // 1 to 0 transition: log a zero bit
-    if (a==2) return 1; // 0 to 1 transition: log a one bit
-    // For other cases, try again.
-  }
-}
-
-int randomBit(void) {
-  // Software whiten bits using Von Neumann algorithm
-  //
-  // von Neumann, John (1951). "Various techniques used in connection
-  // with random digits". National Bureau of Standards Applied Math Series
-  // 12:36.
-  //
-  for(;;) {
-    int a = randomBitRaw2() | (randomBitRaw2()<<1);
-    if (a==1) return 0; // 1 to 0 transition: log a zero bit
-    if (a==2) return 1; // 0 to 1 transition: log a one bit
-    // For other cases, try again.
-  }
-}
-
-char randomByte(void) {
-  char result;
-  uint8_t i;
-  result = 0;
-  for (i=8; i--;) result += result + randomBit();
-  return result;
-}
-
-void memfill(char* location, int size) {
-  for (;size--;) *location++ = randomByte();
-}
-
-
-void EEPROM_write(unsigned int ucAddress, uint8_t ucData)
-{
-  /* Wait for completion of previous write */
-  while(EECR & (1<<EEPE));
-  /* Set Programming mode */
-  EECR = (0<<EEPM1)|(0<<EEPM0);
-  /* Set up address and data registers */
-  EEAR = ucAddress;
-  EEDR = ucData;
-  /* Write logical one to EEMPE */
-  EECR |= (1<<EEMPE);
-  /* Start eeprom write by setting EEPE */
-  EECR |= (1<<EEPE);
-}
-
-uint8_t EEPROM_read(unsigned int ucAddress)
-{
-/* Wait for completion of previous write */
-while(EECR & (1<<EEPE))
-;
-/* Set up address register */
-EEAR = ucAddress;
-/* Start eeprom read by writing EERE */
-EECR |= (1<<EERE);
-/* Return data from data register */
-return EEDR;
-}
-
-uint8_t random_int_in_range(uint8_t low_range, uint8_t high_range) {
-  return low_range + ((high_range - low_range) & randomByte());
 }

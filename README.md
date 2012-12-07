@@ -16,5 +16,5 @@ check the port that the attiny is connected to ```ls -l /dev/cu.*```
 
 stick on the code
 ```
-make all; avrdude -p attiny24 -P /dev/cu.usbmodem1421 -c avrisp -b 19200 -U flash:w:ant.hex;
+python build.py; make all; avrdude -p attiny24 -P /dev/cu.usbmodem1421 -c avrisp -b 19200 -U flash:w:ant.hex;
 ```
