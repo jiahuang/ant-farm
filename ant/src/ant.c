@@ -98,32 +98,39 @@ uint8_t ping_pong(void)
   incoming = tx_send_byte(0xFF); //Get status register
   if (incoming & 0x40)
   {
-    PORTA = PORTA ^ (1<<LED ); // flash an LED
+
     //We have data!
-    receive_data(data_received);
+    receive_data(data_received, 8);
 
-    // get ready to pong back a message
-    configure_transmitter(data_pipe);
+    // make sure that it's a queen's ping
+    if ( (data_received[4] | data_received[5] |
+      data_received[6] | data_received[7]) == 0x00 ) {
 
-    data_array[0] = data_received[0];
-    data_array[1] = data_received[1];
-    data_array[2] = data_received[2];
-    data_array[3] = data_received[3];
-    data_array[4] = UUID[0];
-    data_array[5] = UUID[1];
-    data_array[6] = UUID[2];
-    data_array[7] = UUID[3];
+      PORTA = PORTA ^ (1<<LED ); // flash an LED
 
-    delay_ms(UUID[0]);
-    
-    // Send over theping
-    transmit_data(data_array);
+      // get ready to pong back a message
+      configure_transmitter(data_pipe);
 
-    // // wait for transmitting to be done
-    delay_ms(10);
-    // go back to receiving
-    configure_receiver(data_pipe);
-    PORTA = PORTA ^ (1<<LED ); // flash an LED
+      data_array[0] = data_received[0];
+      data_array[1] = data_received[1];
+      data_array[2] = data_received[2];
+      data_array[3] = data_received[3];
+      data_array[4] = UUID[0];
+      data_array[5] = UUID[1];
+      data_array[6] = UUID[2];
+      data_array[7] = UUID[3];
+
+      delay_ms(UUID[0]);
+      
+      // Send over theping
+      transmit_data(data_array);
+
+      // // wait for transmitting to be done
+      delay_ms(10);
+      // go back to receiving
+      configure_receiver(data_pipe);
+      PORTA = PORTA ^ (1<<LED ); // flash an LED
+    }
   }
 
   // delay_ms(100);
