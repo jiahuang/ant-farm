@@ -21,7 +21,7 @@
 
 #define LIKE_BUTTON 0
 #define LED 1
-#define LED2 2
+// #define LED2 2
 #define ANALOG_VOLTAGE 3
 
 #define RX_DR 6
@@ -97,9 +97,9 @@ uint8_t configure_transmitter(uint8_t * address)
 
   tx_send_command(0x25, 0x02); //RF Channel 2
 
-  // tx_send_command(0x26, 0x07); //Air data rate 1Mbit, 0dBm, Setup LNA
+  tx_send_command(0x26, 0x07); //Air data rate 1Mbit, 0dBm, Setup LNA
   // tx_send_command(0x26, 0x01); //Air data rate 1Mbit, -18dBm, Setup LNA
-  tx_send_command(0x26, 0x00); //Air data rate 1Mbit, -18dBm, Setup LNA
+  // tx_send_command(0x26, 0x00); //Air data rate 1Mbit, -18dBm, Setup LNA
 
   tx_send_payload(0x30, 5, address); //Set TX address
   
