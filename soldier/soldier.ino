@@ -122,7 +122,7 @@ void loop(void)
   if (transmit_time_counter >= TRANSMIT_TIME) {
     transmit_init();
 //    delay(200);
-      byte queen_id[8] = {16,32,48,64, 0, 0, 0, 0};
+      byte queen_id[8] = {30,30,30,30, 0, 0, 0, 0};
       boolean okay = transmit(queen_id);
       if (okay) {
        transmit_time_counter = 0;
@@ -133,6 +133,7 @@ void loop(void)
       }
   } else {
     transmit_time_counter++;
+//    Serial.println("about to receive");
     receive_data();
   }
       // // First, stop listening so we can talk
@@ -171,18 +172,21 @@ void receive_data(void) {
   //        Serial.print("inner loop ");
       // Fetch the payload, and see if this was the last one.
       done = radio.read( &received_data, 8 );
+      
   //        Serial.println("DONE" + done);
       // Spew it
-      Serial.print("Got payload: ");
-      
-  //        Serial.println(received_data);
-      for (int i = 0; i < 8; i++) {
-        if (received_data[i] <= 0xF)
-          Serial.print("0");
-        Serial.print(received_data[i], HEX); 
+      // check that it's a queen
+      if ( (received_data[4] | received_data[5] | 
+        received_data[6] | received_data[7]) != 0x0) {
+        Serial.print("Got payload: ");
+        for (int i = 0; i < 8; i++) {
+          if (received_data[i] <= 0xF)
+            Serial.print("0");
+          Serial.print(received_data[i], HEX); 
+        }
+        Serial.println();
       }
-      Serial.println();
-  
+      
       // Delay just a little bit to let the other unit
       // make the transition to receiver
       delay(20);
