@@ -3,11 +3,7 @@
   * DO NOT TOUCH.
   */
 
-#define ID_1 0x01
-#define ID_2 0x02
-#define ID_3 0x03
-#define ID_4 0x04
-#define ID_5 0x05
-#define ID_6 0x06
-#define ID_7 0x07
-#define ID_8 0x08
+#define ID_1 0x17
+#define ID_2 0x00
+#define ID_3 0x00
+#define ID_4 0x00
