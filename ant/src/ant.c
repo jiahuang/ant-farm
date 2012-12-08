@@ -130,13 +130,17 @@ int main (void)
   PORTA = PORTA & ~(1 << LED);
 
 
+
   ACSR = (1<<ACD); //Turn off Analog Comparator - this removes about 1uA
   PRR = 0x0B; //Reduce everything except timer0
     
   while(1)
   {
     ping_pong();
-    asm volatile ("sleep"); //Sleep until a ping wakes us up on interrupt
+       PORTA = PORTA ^(1 << 2);
+   sleep_cpu(); //Sleep until a ping wakes us up on interrupt
+   // sleep_disable();  
+      PORTA = PORTA ^(1 << 3);
   }
   
   return(0);
@@ -145,10 +149,10 @@ int main (void)
 void ioinit (void)
 {
   //1 = Output, 0 = Input
-  DDRA = 0xFF & ~(1<<TX_MISO | 1 << LIKE_BUTTON | 1 << ANALOG_VOLTAGE);//| 1<<BUTTON0 | 1<<BUTTON1 | 1<<BUTTON2 | 1<<BUTTON3 | 1<<BUTTON4);
+  DDRA = 0xFF & ~(1<<TX_MISO);//| 1<<BUTTON0 | 1<<BUTTON1 | 1<<BUTTON2 | 1<<BUTTON3 | 1<<BUTTON4);
   DDRB = 0b00000110; //(CE on PB1) (CS on PB2)
 
-  PORTA = 0b10001010;
+  PORTA = 0b10011110;
 
   cbi(PORTB, TX_CE); //Stand by mode
   
