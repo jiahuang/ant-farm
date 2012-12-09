@@ -1,17 +1,20 @@
 # build file for the ant
+from random import randrange
 
 # set up the id
 MAX_ID = 16777215 # FF FF FF
 INCREMENTATION = 1
 NUM_BYTES = 4
+MAX_DELAY = 255
+MIN_DELAY = 20
 
 current_val = 1;
 # read in the current id
 with open("id.c") as f:
   data = f.read().split("\n")[4:] # skip the first 5 lines
   val = ""
-  for line in reversed(data):
-    if len(line) > 1:
+  for i, line in enumerate(reversed(data)):
+    if len(line) > 1 and i >= 1:
       # parse out the hex
       val += line.split(" ")[2].replace("0x", "")#.decode("hex")
     
@@ -54,3 +57,9 @@ with open('id.c', 'w') as f:
   while i < NUM_BYTES - i:
     f.write("#define ID_" + str(i) + " 0x00\n")
     i += 1
+
+  us_delay = randrange(MAX_DELAY - MIN_DELAY) + MIN_DELAY
+  print "US DELAY: ", us_delay
+  # write in the us delay
+  f.write("#define US_DELAY "+ hex(us_delay).upper())
+
