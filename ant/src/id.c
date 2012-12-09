@@ -3,8 +3,8 @@
   * DO NOT TOUCH.
   */
 
-#define ID_1 0x19
+#define ID_1 0x1B
 #define ID_2 0x00
 #define ID_3 0x00
 #define ID_4 0x00
-#define US_DELAY 0X86
+#define US_DELAY 0X45

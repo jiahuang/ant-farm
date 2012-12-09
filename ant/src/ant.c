@@ -63,7 +63,7 @@ uint8_t data_received[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 char UUID[UUID_SIZE] = { ID_1, ID_2, ID_3, ID_4 } ;
 
 // ~8 resets per minute to get total number of resets
-uint32_t resets_remaining = 8 * MINUTES_TO_RESET;
+uint32_t interrupts_remaining = 8 * MINUTES_TO_RESET;
 
 #include "nRF24L01-tx.c"
 #include "nRF24L01-rx.c"
@@ -86,15 +86,15 @@ ISR(PCINT1_vect)
 ISR(WDT_vect) {
 
     cli();
-    PORTA = PORTA ^ (1<<2 ); // flash an LED for two seconds
+    PORTA = PORTA ^ (1<<2 ); // flash an LED
 
-    if (--resets_remaining <= 0) {
+    if (--interrupts_remaining <= 0) {
 
       // Set the watchdog to stop interrupting 
       WDTCSR |= ~(1 << WDIE);
 
-      //prescaler set to 1
-      WDTCSR &= (1 << WDCE) | ~(1 << WDP3) | (1<<WDP2 ) | (1 << WDP1);
+      //prescaler set to 2
+      WDTCSR &= (1 << WDCE) | ~(1 << WDP3)  | (1 << WDP1);
 
       // Enable the reset
       WDTCSR |= (1 << WDE);
@@ -203,8 +203,8 @@ void ioinit (void)
   PCMSK1 = (1 << NRF_IRQ); 
   MCUCR = (1<<SM1)|(1<<SE); //Setup Power-down mode and enable sleep
 
-  //prescaler set to 2 seconds
-  WDTCSR |= (1 << WDCE) | (1 << WDP2) | (1 << WDP1) | (1 << WDP0);
+  //prescaler set to 8 seconds
+  WDTCSR |= (1 << WDCE) | (1 << WDP3) |  (1 << WDP0);
 
   // Set the watchdog to interrupt instead of reset
   WDTCSR |= (1 << WDIE);
