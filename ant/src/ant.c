@@ -90,8 +90,6 @@ uint8_t ping_pong(void)
     if ( (data_received[4] | data_received[5] |
       data_received[6] | data_received[7]) == 0x00 ) {
 
-      PORTA = PORTA ^ (1<<LED ); // flash an LED
-
       // get ready to pong back a message
       configure_transmitter(data_pipe);
 
@@ -104,23 +102,22 @@ uint8_t ping_pong(void)
       data_array[6] = UUID[2];
       data_array[7] = UUID[3];
 
-      delay_ms((UUID[0] * 1000) & 255);
-      
-      // Send over theping
-      transmit_data(data_array);
-
-      // // wait for transmitting to be done
-      delay_ms(10);
-
       // delay some more for randomness
-      delay_ms(US_DELAY);
-      // go back to receiving
-      configure_receiver(data_pipe);
+      delay_ms(2+US_DELAY);
+      // delay_ms((UUID[0] * 1000) & 255);
+      
+      // Send over the ping
+      transmit_data(data_array);
+      // // wait for transmitting to be done
+      delay_ms(1);
 
       PORTA = PORTA ^ (1<<LED ); // flash an LED
-
+      delay_ms(2);
+      // go back to receiving
+      configure_receiver(data_pipe);
       // delay for some fun
-      delay_ms(20);
+      delay_ms(2);
+      PORTA = PORTA ^ (1<<LED ); // flash an LED
     }
   }
 
