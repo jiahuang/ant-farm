@@ -111,9 +111,16 @@ uint8_t ping_pong(void)
 
       // // wait for transmitting to be done
       delay_ms(10);
+
+      // delay some more for randomness
+      delay_ms(US_DELAY);
       // go back to receiving
       configure_receiver(data_pipe);
+
       PORTA = PORTA ^ (1<<LED ); // flash an LED
+
+      // delay for some fun
+      delay_ms(20);
     }
   }
 
