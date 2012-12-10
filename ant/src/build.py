@@ -58,8 +58,8 @@ with open('id.c', 'w') as f:
     f.write("#define ID_" + str(i) + " 0x00\n")
     i += 1
 
-  us_delay = randrange(MAX_DELAY - MIN_DELAY) + MIN_DELAY
-  print "US DELAY: ", us_delay
+  ms_delay = randrange(MAX_DELAY - MIN_DELAY) + MIN_DELAY
+  print "MS DELAY: ", ms_delay
   # write in the us delay
-  f.write("#define US_DELAY "+ hex(us_delay).upper())
+  f.write("#define MS_DELAY "+ hex(ms_delay).upper())
 

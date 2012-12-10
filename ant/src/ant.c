@@ -132,7 +132,7 @@ uint8_t ping_pong(void)
 
       // delay some more for randomness
       delay_ms(5);
-      delay_us(US_DELAY);
+      delay_ms(MS_DELAY);
       // delay_ms((UUID[0] * 1000) & 255);
       
       // Send over the ping
