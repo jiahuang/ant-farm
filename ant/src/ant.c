@@ -76,7 +76,7 @@ ISR(PCINT1_vect)
   // 1) read payload through SPI
   while( ping_pong() & 0x40) {
     // 2) clear RX_DR IRQ
-    tx_send_command(0x27, (1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT));
+    // tx_send_command(0x27, (1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT));
     // 3) read FIFO_STATUS to check if there are more payloads available in RX FIFO
     // 4) if there are more data in RX FIFO, repeat from step 1)
   }
@@ -87,17 +87,21 @@ ISR(WDT_vect) {
 
     cli();
     PORTA = PORTA ^ (1<<2 ); // flash an LED
-
+    tx_send_command(0x27, (1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT));
+    
     if (--interrupts_remaining <= 0) {
 
       // Set the watchdog to stop interrupting 
-      WDTCSR |= ~(1 << WDIE);
+      // WDTCSR |= ~(1 << WDIE);
 
-      //prescaler set to 2
-      WDTCSR &= (1 << WDCE) | ~(1 << WDP3)  | (1 << WDP1);
+      // //prescaler set to 2
+      // WDTCSR &= (1 << WDCE) | ~(1 << WDP3)  | (1 << WDP1);
 
-      // Enable the reset
-      WDTCSR |= (1 << WDE);
+      // // Enable the reset
+      // WDTCSR |= (1 << WDE);
+      configure_receiver(data_pipe);
+
+      interrupts_remaining = 8 * MINUTES_TO_RESET;
 
     }
     sei();
@@ -168,8 +172,6 @@ int main (void)
     
   while(1)
   {
-    ping_pong();
-
    sleep_cpu(); //Sleep until a ping wakes us up on interrupt
    // sleep_disable();  
   }

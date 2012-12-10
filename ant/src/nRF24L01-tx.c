@@ -51,7 +51,8 @@ uint8_t tx_spi_byte(uint8_t outgoing);
 //data_array must be setup before calling this function
 void transmit_data(uint8_t * data)
 {
-  tx_send_command(0x27, 0x7E);  //Clear any interrupts
+  tx_send_command(0x27, (1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT));
+  // tx_send_command(0x27, 0x7E);  //Clear any interrupts
   
 //  tx_send_command(0x20,0x7E); //Power up and be a transmitter. 2-byte CRC.
   tx_send_command(0x20,0b01111010);//Power up and be a transmitter. 1-byte CRC.
