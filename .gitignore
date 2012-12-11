@@ -18,6 +18,7 @@
 
 # makefile generations
 ant/src/.dep
+colony/src/.dep
 *.eep
 *.elf
 *.lss
