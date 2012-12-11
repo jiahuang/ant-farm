@@ -88,7 +88,7 @@ ISR(WDT_vect) {
     cli();
     PORTA = PORTA ^ (1<<2 ); // flash an LED
     tx_send_command(0x27, (1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT));
-    
+
     if (--interrupts_remaining <= 0) {
 
       // Set the watchdog to stop interrupting 
@@ -101,6 +101,8 @@ ISR(WDT_vect) {
       // WDTCSR |= (1 << WDE);
       configure_receiver(data_pipe);
 
+      delay_ms(50);
+      
       interrupts_remaining = 8 * MINUTES_TO_RESET;
 
     }

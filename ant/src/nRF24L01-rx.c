@@ -31,7 +31,6 @@ void init_nRF_pins(void)
 void receive_data(uint8_t * data, uint8_t size)
 {
   cbi(PORTB, TX_CSN); //Stand by mode
-  tx_send_command(0x27, (1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT));
 
   tx_spi_byte(0x61); //Read RX Payload
 
@@ -43,8 +42,9 @@ void receive_data(uint8_t * data, uint8_t size)
   
   tx_send_byte(0xE2); //Flush RX FIFO
   
-
   sbi(PORTB, TX_CE); //Go back to receiving!
+
+  tx_send_command(0x27, (1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT));
 }
 
 //2.4G Configuration - Receiver
