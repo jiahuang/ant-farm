@@ -1,20 +1,4 @@
 
-
-// testing with code from sparkfun
-/*
-    2-8-2008
-    Copyright Spark Fun Electronics© 2008
-    Nathan Seidle
-    nathan at sparkfun.com
-    
-  Key FOB transmitter based on the nRF24L01
-  
-  2-4uA average current
-*/
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
@@ -24,27 +8,17 @@
 #define sbi(var, mask)   ((var) |= (uint8_t)(1 << mask))
 #define cbi(var, mask)   ((var) &= (uint8_t)~(1 << mask))
 
-/* EEPROM UUID
-// START_UP_STRING_CODE is a code that we can check EEPROM for to see if we have 
-// already saved a UID in EEPROM. We save this code to memory just after
-// receiving the UID. The reason for it is 
-// because our EEPROM isn't guaranteed to be uninitualized. Therefore,
-// we can't just check a certain point in EEPROM memory for a UID
-// because it might be trash. Instead, we will check the EEPROM for this
-// code at a certain point in memory that basically tells us that 
-// we have already saved a UID. 
-*/
-#define START_UP_STRING_CODE "STORED"
-// Where we are saving the code in EEPROM
-#define START_UP_STRING_CODE_ADDRESS 0
-// The first address that the UUID is saved at
-#define START_UUID_ADDRESS (sizeof(START_UP_STRING_CODE) + 1)
-// The size, in bytes, of the UUID
 #define UUID_SIZE  4
 // The pin register associated with the nRF24 IRQ pin
 #define NRF_IRQ 0
 
-#define MINUTES_TO_RESET 5;
+#define MINUTES_TO_RESET 5
+
+// The receiver frequency. Should match colony transmit frequency.
+// Frequency = 2400 + RF_CH [MHz]
+#define RECEIVE_FREQ 3 // RF_CH = 3
+// The transmit frequency. Should match the queen receive frequency.
+#define TRANSMIT_FREQ 10 // RF_CH = 10
 
 //Define functions
 //======================
@@ -52,6 +26,7 @@ void ioinit(void);      //Initializes IO
 void delay_ms(uint16_t x); //General purpose delay
 void delay_us(uint8_t x);
 uint8_t ping_pong(void);
+
 // TX address. RX address needs to be the same as this
 // goes from least significant to most significant
 uint8_t data_pipe[5] = {0xE7, 0xE7, 0xE7, 0xE7, 0xE7};
@@ -72,14 +47,7 @@ uint32_t interrupts_remaining = 8 * MINUTES_TO_RESET;
 ISR(PCINT1_vect)
 {
   cli();
-  // wake up from sleep mode
-  // 1) read payload through SPI
-  while( ping_pong() & 0x40) {
-    // 2) clear RX_DR IRQ
-    // tx_send_command(0x27, (1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT));
-    // 3) read FIFO_STATUS to check if there are more payloads available in RX FIFO
-    // 4) if there are more data in RX FIFO, repeat from step 1)
-  }
+  while( ping_pong() & 0x40) { }
   sei();
 }
 
@@ -99,9 +67,9 @@ ISR(WDT_vect) {
 
       // // Enable the reset
       // WDTCSR |= (1 << WDE);
-      configure_receiver(data_pipe);
+      configure_receiver(data_pipe, RECEIVE_FREQ);
 
-      delay_ms(50);
+      delay_ms(20);
       
       interrupts_remaining = 8 * MINUTES_TO_RESET;
 
@@ -125,7 +93,7 @@ uint8_t ping_pong(void)
       data_received[6] | data_received[7]) == 0x00 ) {
 
       // get ready to pong back a message
-      configure_transmitter(data_pipe);
+      configure_transmitter(data_pipe, TRANSMIT_FREQ);
 
       data_array[0] = data_received[0];
       data_array[1] = data_received[1];
@@ -138,7 +106,7 @@ uint8_t ping_pong(void)
 
       // delay some more for randomness
       delay_ms(5);
-      delay_ms(MS_DELAY);
+      delay_ms(MS_DELAY * 5); // space out at at least 5 ms
       // delay_ms((UUID[0] * 1000) & 255);
       
       // Send over the ping
@@ -149,7 +117,7 @@ uint8_t ping_pong(void)
       PORTA = PORTA ^ (1<<LED ); // flash an LED
       delay_ms(2);
       // go back to receiving
-      configure_receiver(data_pipe);
+      configure_receiver(data_pipe, RECEIVE_FREQ);
       // delay for some fun
       delay_ms(5);
       PORTA = PORTA ^ (1<<LED ); // flash an LED
@@ -185,7 +153,7 @@ void ioinit (void)
 {
   cli();
   //1 = Output, 0 = Input
-  DDRA = 0xFF & ~(1<<TX_MISO);//| 1<<BUTTON0 | 1<<BUTTON1 | 1<<BUTTON2 | 1<<BUTTON3 | 1<<BUTTON4);
+  DDRA = 0xFF & ~(1<<TX_MISO);
   DDRB = 0b00000110; //(CE on PB1) (CS on PB2)
 
   PORTA = 0b10011010;
@@ -202,7 +170,7 @@ void ioinit (void)
   //Init Timer0 for delay_us
   TCCR0B = (1<<CS00); //Set Prescaler to No Prescaling (assume we are running at internal 1MHz). CS00=1 
 
-  configure_receiver(data_pipe);
+  configure_receiver(data_pipe, RECEIVE_FREQ);
 
   GIFR = (1 << PCIF1); // Enable logic interrupt on PCINT 11:8
   GIMSK = (1 << PCIE1); // Enable pin change interrupt request on PCINT 11:8

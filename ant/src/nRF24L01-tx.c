@@ -1,8 +1,5 @@
 /*
-    2-8-2008
-    Copyright Spark Fun Electronics© 2008
-  
-  Basic routines for nRF24L01
+  Modified from Sparkfun code at https://www.sparkfun.com/products/8602
 */
 
 #define TX_PORT   PORTA
@@ -32,7 +29,7 @@
 #define W_TX_PAYLOAD  0xA0
 
 //2.4G Configuration - Transmitter
-uint8_t configure_transmitter(uint8_t * address);
+uint8_t configure_transmitter(uint8_t * address, uint8_t rf_channel);
 //Sends command to nRF
 uint8_t tx_send_byte(uint8_t cmd);
 //Basic SPI to nRF
@@ -47,8 +44,7 @@ uint8_t tx_spi_byte(uint8_t outgoing);
 //TX Functions
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-//This sends out the data stored in the data_array
-//data_array must be setup before calling this function
+// transmits a data array. defaults to 8 bytes
 void transmit_data(uint8_t * data)
 {
   tx_send_command(0x27, (1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT));
@@ -59,28 +55,16 @@ void transmit_data(uint8_t * data)
 
   tx_send_byte(0xE1);   //Clear TX Fifo
   
-  tx_send_payload(0xA0, 8, data);  //Clock in 4 byte payload of data_array to TX pipe
+  tx_send_payload(0xA0, 8, data);  //Clock in 8 byte payload of data_array to TX pipe
 
-    sbi(PORTB, TX_CE); //Pulse CE to start transmission
-    delay_ms(3);
-    cbi(PORTB, TX_CE);
-
-  // tx_send_command(0x27, 0x7E); //Clear any interrupts
-  
-  // tx_send_command(W_REGISTER, 0x7A); //Power up and be a transmitter
-
-  // tx_send_byte(0xE1); //Clear TX Fifo
-  
-  // tx_send_payload(W_TX_PAYLOAD); //Clock in 4 byte payload of data_array
-
-  // sbi(PORTB, TX_CE); //Pulse CE to start transmission
-  // delay_ms(3);
-  // cbi(PORTB, TX_CE);
+  sbi(PORTB, TX_CE); //Pulse CE to start transmission
+  delay_ms(3);
+  cbi(PORTB, TX_CE);
 }
 
 //2.4G Configuration - Transmitter
 //This sets up one RF-24G for shockburst transmission
-uint8_t configure_transmitter(uint8_t * address)
+uint8_t configure_transmitter(uint8_t * address, uint8_t rf_channel)
 {
   cbi(PORTB, TX_CE); //Go into standby mode
   
@@ -96,7 +80,7 @@ uint8_t configure_transmitter(uint8_t * address)
   tx_send_command(0x24, 0x00); //Disable auto-retransmit
   // tx_send_command(0x24, 0x05); // retransmit 5 times w/ a 250uS delay each time
 
-  tx_send_command(0x25, 0x02); //RF Channel 2
+  tx_send_command(0x25, rf_channel); // set the RF channel
 
   tx_send_command(0x26, 0x07); //Air data rate 1Mbit, 0dBm, Setup LNA
   // tx_send_command(0x26, 0x01); //Air data rate 1Mbit, -18dBm, Setup LNA
@@ -109,7 +93,7 @@ uint8_t configure_transmitter(uint8_t * address)
   return(tx_send_byte(0xFF));
 }
 
-//Sends the 4 bytes of payload
+//Sends x bytes of payload
 void tx_send_payload(uint8_t cmd, uint8_t size, uint8_t * data)
 {
   uint8_t i;
