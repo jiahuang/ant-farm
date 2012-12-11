@@ -1,14 +1,17 @@
 # build file for the ant
+# last byte is always 00 for ants
 from random import randrange
 
 # set up the id
 MAX_ID = 16777215 # FF FF FF
 INCREMENTATION = 1
 NUM_BYTES = 4
-MAX_DELAY = 255
-MIN_DELAY = 20
+MAX_DELAY = 150
+MIN_DELAY = 1
 
 current_val = 1;
+print "############# GENERATING ANT ############# "
+
 # read in the current id
 with open("id.c") as f:
   data = f.read().split("\n")[4:] # skip the first 5 lines
