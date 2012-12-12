@@ -6,8 +6,8 @@ from random import randrange
 MAX_ID = 16777215 # FF FF FF
 INCREMENTATION = 1
 NUM_BYTES = 4
-MAX_DELAY = 150
-MIN_DELAY = 1
+MAX_DELAY = 200
+MIN_DELAY = 60
 
 current_val = 1;
 print "############# GENERATING ANT ############# "
