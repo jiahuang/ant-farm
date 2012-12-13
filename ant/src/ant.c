@@ -38,7 +38,9 @@ uint8_t data_received[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 char UUID[UUID_SIZE] = { ID_1, ID_2, ID_3, ID_4 } ;
 
 // ~8 resets per minute to get total number of resets
-uint32_t interrupts_remaining = 8 * MINUTES_TO_RESET;
+uint16_t interrupts_remaining = 8 * MINUTES_TO_RESET;
+
+uint16_t ping_id = 0x00;
 
 #include "nRF24L01-tx.c"
 #include "nRF24L01-rx.c"
@@ -59,14 +61,6 @@ ISR(WDT_vect) {
 
     if (--interrupts_remaining <= 0) {
 
-      // Set the watchdog to stop interrupting 
-      // WDTCSR |= ~(1 << WDIE);
-
-      // //prescaler set to 2
-      // WDTCSR &= (1 << WDCE) | ~(1 << WDP3)  | (1 << WDP1);
-
-      // // Enable the reset
-      // WDTCSR |= (1 << WDE);
       configure_receiver(data_pipe, RECEIVE_FREQ);
 
       delay_ms(20);
@@ -97,12 +91,15 @@ uint8_t ping_pong(void)
 
       data_array[0] = data_received[0];
       data_array[1] = data_received[1];
-      data_array[2] = data_received[2];
-      data_array[3] = data_received[3];
-      data_array[4] = UUID[0];
-      data_array[5] = UUID[1];
-      data_array[6] = UUID[2];
-      data_array[7] = UUID[3];
+      data_array[2] = UUID[0];
+      data_array[3] = UUID[1];
+      data_array[4] = UUID[2];
+      data_array[5] = UUID[3];
+      data_array[6] = ((ping_id >> 8) & 0xFF);
+      data_array[7] = (ping_id & 0xFF);
+
+      if (ping_id == 0xFFFF) ping_id = 0;
+      else ping_id++;
 
       // delay some more for randomness
       delay_ms(5);
@@ -143,7 +140,6 @@ int main (void)
   while(1)
   {
    sleep_cpu(); //Sleep until a ping wakes us up on interrupt
-   // sleep_disable();  
   }
   
   return(0);

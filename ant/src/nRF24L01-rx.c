@@ -38,7 +38,7 @@ void configure_receiver(uint8_t * address, uint8_t rf_channel)
 
   tx_send_command(0x23, 0x03); //Set address width to 5bytes (default, not really needed)
 
-  tx_send_command(0x26, 0x07); //Air data rate 1Mbit, 0dBm, Setup LNA
+  tx_send_command(0x26, 0x00); //Air data rate 1Mbit, 0dBm, Setup LNA
 
   tx_send_command(0x31, 0x08); //8 byte receive payload
 
