@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sign Up For Expo Live</title>
+    <!-- Bootstrap -->
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+  </head>
+  <body>
+    <div class="container">
+      <!-- Example row of columns -->
+      <div class="row">
+        <div class="span4">
+          <h2>Users</h2>
+          <select id="user_select_box"></select>
+          <p id="selected_user">Select a user</p>
+        </div>
+        <div class="span4">
+          <h2>Ants</h2>
+          <select id="ant_select_box"></select>
+          <p id="selected_ant">Select an Ant</p>
+       </div>
+       <div class="span4">
+          <a id="sync-user" class="btn btn-green btn-large btn-success active disabled"  data-link="modal" data-target="#signup-modal" style="position:relative; top:50px;">Sync User</a>
+      </div>
+      </div>
+    </div>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script>
+    load_users = function() {
+      var users;
+
+      $.getJSON('http://api.olinexpo.com/users/', function (data, successflag) {
+        users = data;
+        var select_box = $('#user_select_box');
+        var item = $('<option></option>').text("None");
+        select_box.append(item);
+
+          if (!successflag) {
+            console.log("Error: No user data was returned");
+            return;
+          }
+
+          $.each(users, function(index, value) {
+            var item = $('<option></option>').val(value.facebookid).text(value.name);
+            select_box.append(item);
+
+          });
+        });
+    }
+
+    $('#user_select_box').change(function() {
+          if ($('#user_select_box option:selected').text() == "None") {
+            $('#selected_user').text("Select a User");
+          }
+          else {
+            $('#selected_user').text("");
+
+            if (('#selected_ant').text == "") {
+                $('#sync-user').removeClass('disabled');
+            } else {
+                $('#sync-user').addClass('disabled');
+            }
+          }
+
+    });
+
+    $('#ant_select_box').change(function() {
+          if ($('#ant_select_box option:selected').text() == "None") {
+            $('#selected_ant').text("Select an Ant");
+          }
+          else {
+            $('#selected_ant').text("");
+
+            if (('#selected_user').text == "") {
+                $('#sync-user').removeClass('disabled');
+            } else {
+                $('#sync-user').addClass('disabled');
+            }
+          }
+
+    });
+
+    load_ants = function() {
+        $.getJSON('http://api.olinexpo.com/ants/', function (data, successflag) {
+        ants = data;
+        var select_box = $('#ant_select_box');
+        var item = $('<option></option>').text("None");
+        select_box.append(item);
+
+        if (!successflag) {
+          console.log("Error: No ant data was returned");
+          return;
+        }
+
+        $.each(ants, function(index, value) {
+          var item = $('<option></option>').val(value.id).text(value.name);
+          select_box.append(item);
+        });
+      });
+    } 
+    $('#sync-user').click(function() {
+       if ($('#sync-user').hasClass('disabled')) return;
+
+       $.ajax({
+        type: 'PUT',
+        url: 'http://api.olinexpo.com/ant/' + $('#ant_select_box option:selected').val() ,
+        data: {
+          user: $('#user_select_box option:selected').val()
+        },
+        success: function (ret, successflag) {
+          console.log(successflag);
+        }
+      })
+    });
+
+    $(load_users);
+    $(load_ants);
+  
+    </script>
+    </div> 
+  </body>
+</html>
