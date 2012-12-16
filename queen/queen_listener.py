@@ -31,29 +31,34 @@ while 1:
   if pos != -1:
     message = data[pos + len(prefix):]
     print "message:", json.dumps(message)
-    # 8 bytes, each 2 characters big, so make minimum 16 to left pad with appropriate leading 0's
-    # these might be reversed
+    # message is 31 bytes
+    # first byte is the queen id
     queen_id = message[0:2]
-    colony_id = message[2:6]
-    ant_id = message[6:14]
-    ping_id = message[14:]
+    colonies = []
+    ants = []
+    pings = []
 
-    # Revert to small-endian.
-    colony_id = chunks(colony_id, 2)
-    colony_id.reverse()
-    colony_id = ''.join(colony_id)
-    ant_id = chunks(ant_id, 2)
-    ant_id.reverse()
-    ant_id = ''.join(ant_id)
+    # next 30 bytes are 5 payloads of 6 bytes each
+    for i in range(5):
+      # colony id
+      colony_id = chunks(message[i*12+2:i*12+6], 2)
+      colony_id.reverse()
+      colony_id = ''.join(colony_id)
+      colonies.append(colony_id)
+      # print colonies
+      # colonies[i] = ''.join(colonies[i])
+      # print colonies[i]
+      # ant id
+      ant_id = chunks(message[i*12+6:i*12+10], 2)
+      ant_id.reverse()
+      ant_id = ''.join(ant_id)
+      ants.append(ant_id)
+      # ant[i] = ''.join(ant[i])
 
-    # ping id is in big endian so dont reverse it
-    #ping_id = chunks(ping_id, 2)
-    #ping_id.reverse()
-    #ping_id = ''.join(ping_id)
-    # grab_ant_ids()
-
-    # POST that biznatch
-    print "queen:", json.dumps(queen_id), "colony:", json.dumps(colony_id), "ant:", json.dumps(ant_id), "ping:", json.dumps(ping_id)
-    post_to_server(colony_id, ant_id, ping_id);
-    # read in the current id
-    # subprocess.check_output(["echo", "Hello World!"])
+      # ping id
+      ping_id = message[i*12+10:i*12+14]
+      pings.append(ping_id)
+      
+      # POST that biznatch
+      print "queen:", json.dumps(queen_id), "colony:", json.dumps(colony_id), "ant:", json.dumps(ant_id), "ping:", json.dumps(ping_id)
+      
