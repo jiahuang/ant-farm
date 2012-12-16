@@ -9,7 +9,7 @@
 #define cbi(var, mask)   ((var) &= (uint8_t)~(1 << mask))
 
 // The size, in bytes, of the UUID
-#define UUID_SIZE  4
+#define UUID_SIZE  2
 // The pin register associated with the nRF24 IRQ pin
 #define NRF_IRQ 0
 
@@ -17,7 +17,7 @@
 
 // The receiver frequency. Should match ant receive frequency.
 // Frequency = 2400 + RF_CH [MHz]
-#define TRANSMIT_FREQ 03 // RF_CH = 3
+#define TRANSMIT_FREQ 3 // RF_CH = 3
 
 //Define functions
 //======================
@@ -31,7 +31,7 @@ uint8_t data_pipe[5] = {0xE7, 0xE7, 0xE7, 0xE7, 0xE7};
 // first 4 bytes are the ID, last byte is button press
 uint8_t data_array[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 // ID of the colony
-char UUID[UUID_SIZE] = { ID_1, ID_2, ID_3, ID_4 } ;
+char UUID[UUID_SIZE] = { ID_1, ID_2 } ;
 
 // ~8 resets per minute to get total number of resets
 // uint32_t interrupts_remaining = 8 * MINUTES_TO_RESET;
@@ -49,6 +49,8 @@ ISR(WDT_vect) {
 
   ping();
   delay_ms(50);
+  // delay by the id % 10
+  delay_ms(ID_1 % 10);
   
   PORTA = PORTA ^ (1 << LED);
   sei();
@@ -58,15 +60,13 @@ void ping() {
   // stick on colony ID
   data_array[0] = UUID[0];
   data_array[1] = UUID[1];
-  data_array[2] = UUID[2];
-  data_array[3] = UUID[3];
+  data_array[2] = UUID[0];
+  data_array[3] = UUID[1];
+  data_array[4] = UUID[0];
+  data_array[5] = UUID[1];
+  data_array[6] = UUID[0];
+  data_array[7] = UUID[1];
 
-  // pad where the antID should go with 0s
-  data_array[4] = 0x00;
-  data_array[5] = 0x00;
-  data_array[6] = 0x00;
-  data_array[7] = 0x00;
-  
   transmit_data(data_array);
   delay_ms(5);
 }
