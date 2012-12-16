@@ -9,8 +9,8 @@ arduino = serial.Serial('/dev/cu.usbmodem1411', 57600) # serial port# and baud r
 def chunks(l, n):
   return [l[i:i+n] for i in range(0, len(l), n)]
 
-def post_to_server(queen_id, ant_id):
-  subprocess.call(["curl", "-X", "POST", "-d", "colony=" + colony_id, "-d", "ant=" + ant_id, "api.olinexpo.com/binds"])
+def post_to_server(queen_id, ant_id, ping_id):
+  subprocess.call(["curl", "-X", "POST", "-d", "colony=" + colony_id, "-d", "ant=" + ant_id, "-d", "ping=" + ping_id, "localhost:5000/binds"])
 
 def append_to_file(filename, data):
   with open(filename, "a") as f: # open file in append mode
@@ -54,6 +54,6 @@ while 1:
 
     # POST that biznatch
     print "queen:", json.dumps(queen_id), "colony:", json.dumps(colony_id), "ant:", json.dumps(ant_id), "ping:", json.dumps(ping_id)
-    post_to_server(colony_id, ant_id);
+    post_to_server(colony_id, ant_id, ping_id);
     # read in the current id
     # subprocess.check_output(["echo", "Hello World!"])
