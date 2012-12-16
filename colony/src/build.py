@@ -4,11 +4,11 @@
 from random import randrange
 
 # set up the id
-MAX_ID = 4294967295 # FF FF FF FF
+MAX_ID = 65536 # FF FF
 INCREMENTATION = 1
-NUM_BYTES = 4
-MAX_DELAY = 255
-MIN_DELAY = 20
+NUM_BYTES = 2
+# MAX_DELAY = 255
+# MIN_DELAY = 20
 
 current_val = 1;
 print "########### GENERATING COLONY ################# "
@@ -19,7 +19,6 @@ with open("colony_id.c") as f:
   val = ""
   for i, line in enumerate(reversed(data)):
     if len(line) > 1 and i >= 1:
-      print line
       # parse out the hex
       val += line.split(" ")[2].replace("0x", "")#.decode("hex")
     
