@@ -3,6 +3,8 @@
 #include "RF24.h"
 #include "printf.h"
 
+#define QUEEN_ID 0x01
+
 // listens on channel 10
 // Set up nRF24L01 radio on SPI bus plus pins 9 & 10 
 
@@ -63,6 +65,9 @@ void loop(void)
       if ( (received_data[4] | received_data[5] | 
         received_data[6] | received_data[7]) != 0x0) {
         Serial.print("Got payload: ");
+        if (QUEEN_ID <= 0xF)
+          Serial.print("0");
+        Serial.print(QUEEN_ID, HEX);
         for (int i = 0; i < 8; i++) {
           if (received_data[i] <= 0xF)
             Serial.print("0");

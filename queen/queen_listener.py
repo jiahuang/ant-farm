@@ -33,9 +33,10 @@ while 1:
     print "message:", json.dumps(message)
     # 8 bytes, each 2 characters big, so make minimum 16 to left pad with appropriate leading 0's
     # these might be reversed
-    colony_id = message[0:4]
-    ant_id = message[4:12]
-    ping_id = message[12:]
+    queen_id = message[0:2]
+    colony_id = message[2:6]
+    ant_id = message[6:14]
+    ping_id = message[14:]
 
     # Revert to small-endian.
     colony_id = chunks(colony_id, 2)
@@ -52,7 +53,7 @@ while 1:
     # grab_ant_ids()
 
     # POST that biznatch
-    print "colony:", json.dumps(colony_id), "ant:", json.dumps(ant_id), "ping:", json.dumps(ping_id)
+    print "queen:", json.dumps(queen_id), "colony:", json.dumps(colony_id), "ant:", json.dumps(ant_id), "ping:", json.dumps(ping_id)
     post_to_server(colony_id, ant_id);
     # read in the current id
     # subprocess.check_output(["echo", "Hello World!"])
