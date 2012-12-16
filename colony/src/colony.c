@@ -17,7 +17,7 @@
 
 // The receiver frequency. Should match ant receive frequency.
 // Frequency = 2400 + RF_CH [MHz]
-#define TRANSMIT_FREQ 03 // RF_CH = 3
+#define TRANSMIT_FREQ 10 // RF_CH = 3
 
 //Define functions
 //======================

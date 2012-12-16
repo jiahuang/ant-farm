@@ -21,7 +21,7 @@ void setup(void)
 
   // Setup and configure rf radio
   radio.begin();
-  radio.setChannel(10);
+  radio.setChannel(3);
   radio.setPayloadSize(8);
   radio.setAutoAck(false);
   radio.setCRCLength(RF24_CRC_8);
