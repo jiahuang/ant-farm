@@ -95,6 +95,7 @@ uint8_t ping_pong(void)
       data_array[3] = UUID[1];
       data_array[4] = UUID[2];
       data_array[5] = UUID[3];
+      // ping id is in big endian
       data_array[6] = ((ping_id >> 8) & 0xFF);
       data_array[7] = (ping_id & 0xFF);
 
