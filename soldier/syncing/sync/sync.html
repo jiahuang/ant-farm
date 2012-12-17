@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sync Up With An Ant</title>
+    <!-- Bootstrap -->
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="sync.css" rel="stylesheet" media="screen">
+  </head>
+  <body>
+    <div class="container">
+      <!-- Example row of columns -->
+      <div class="row">
+      <div class="span8">
+        <h2>Unsynced Users</h2>
+        <form class="form-search">
+          <input type="text" class="input-medium search-query" id="users-search">
+          <a class="btn" id="clear-search-button" onclick="clearUsersTableAndSearch(current_table_array, unsynced_users)">Clear</a>
+        </form>
+        <div class="searchable-table-container">
+          <table class="table" id="users-table">
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="row" id="ant-select-container">
+      <div class="span12">
+        <h2>Ants</h2>
+          <form class="form-search">
+            <input type="text" class="input-medium search-query" id="ant-search">
+            <a class="btn" id="clear-search-button" onclick="clearAntsTableAndSearch()">Clear</a>
+          </form>
+          <div id="ant-table-container" class="searchable-table-container">
+            <table class="table" id="ants-table">
+            </table>
+          </div> 
+      </div>
+    </div>
+    <div class="row">
+      <div class="span5" id="selected-user-container" >
+        <h3>Selected User: <span id="selected-user-span">None<span> </h3>
+      </div>
+      <div class="span5" id="selected-ant-container">
+        <h3>Selected Ant: <span id="selected-ant-span">None<span></h3>
+    </div>
+    <div class="row" id="sync-button">
+        <div class="span12">
+           <center> <a id="sync-user" class="btn btn-green btn-large btn-success active"  data-link="modal" data-target="#signup-modal" style="text-align:center">Sync User</a> </center>
+        </div>
+    </div>
+    <div class="row">
+      <div class="span12">
+         <div id="dialog"><h2 id="sync-text">Sync Succesful</h2></div>
+      </div>
+    </div>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="sync.js"></script>
+    </div> 
+  </body>
+</html>
