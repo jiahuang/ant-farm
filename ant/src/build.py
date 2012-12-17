@@ -3,11 +3,11 @@
 from random import randrange
 
 # set up the id
-MAX_ID = 16777215 # FF FF FF
+MAX_ID = 65536 # FF FF
 INCREMENTATION = 1
-NUM_BYTES = 4
-MAX_DELAY = 200
-MIN_DELAY = 60
+NUM_BYTES = 2
+# MAX_DELAY = 200
+# MIN_DELAY = 60
 
 current_val = 1;
 print "############# GENERATING ANT ############# "
@@ -17,7 +17,7 @@ with open("id.c") as f:
   data = f.read().split("\n")[4:] # skip the first 5 lines
   val = ""
   for i, line in enumerate(reversed(data)):
-    if len(line) > 1 and i >= 1:
+    if len(line) > 1 and i > 1:
       # parse out the hex
       val += line.split(" ")[2].replace("0x", "")#.decode("hex")
     
@@ -28,18 +28,18 @@ with open("id.c") as f:
 current_val += INCREMENTATION
 if current_val > MAX_ID: current_val = 0 # wrap around
 print "Incrementing id to: ", current_val
-current_val = hex(current_val).replace("0x", "").upper()
+new_val = hex(current_val).replace("0x", "").upper()
 
 # pad current value up to 5 bytes long
-if len(current_val) < NUM_BYTES*2:
-  i = NUM_BYTES*2 - len(current_val) 
+if len(new_val) < NUM_BYTES*2:
+  i = NUM_BYTES*2 - len(new_val) 
   while i > 0:
-    current_val = "0"+current_val
+    new_val = "0"+new_val
     i -= 1
 
 # split up current val into an array
-print "HEX ID: ", current_val
-current_vals = [current_val[i:i+2] for i in range(0, len(current_val), 2)]
+print "HEX ID: ", new_val
+new_val = [new_val[i:i+2] for i in range(0, len(new_val), 2)]
 
 with open('id.c', 'w') as f:
 
@@ -51,7 +51,7 @@ with open('id.c', 'w') as f:
 """)
   hex_id = []
   i = 1
-  for val in reversed(current_vals):
+  for val in reversed(new_val):
     if len(val) == 1: val = "0" + val 
     f.write("#define ID_" + str(i) + " 0x"+str(val) + "\n")
     i += 1
@@ -61,8 +61,10 @@ with open('id.c', 'w') as f:
     f.write("#define ID_" + str(i) + " 0x00\n")
     i += 1
 
-  ms_delay = randrange(MAX_DELAY - MIN_DELAY) + MIN_DELAY
+  ms_delay = current_val % 40
+  max_payload = 3 + current_val % 3
   print "MS DELAY: ", ms_delay
+  print "MAX PAYLOAD: ", max_payload
   # write in the us delay
-  f.write("#define MS_DELAY "+ hex(ms_delay).upper())
-
+  f.write("#define MS_DELAY "+ str(ms_delay) + "\n")
+  f.write("#define MAX_PAYLOAD "+ str(max_payload))
