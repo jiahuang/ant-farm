@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Unsync From Expo Live</title>
+    <!-- Bootstrap -->
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="unsync.css" rel="stylesheet" media="screen">
+  </head>
+  <body>
+    <div class="container">
+      <!-- Example row of columns -->
+      <div class="row">
+        <div class="span6">
+          <h2>Synced Users</h2>
+          <form class="form-search">
+            <input type="text" class="input-medium search-query" id="synced-users-search">
+            <a class="btn" id="clear-search-button" onclick="clearUsersTableAndSearch(current_table_array, synced_users)">Clear</a>
+          </form>
+          <div class="searchable-table-container">
+            <table class="table" id="synced-users-table">
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span9">
+          <h3>Selected User: <span id="selected-user-span">None </span><span id="with-text"> with Ant ID: <span id="selected-ant-span">ant-id</span></span></h3>
+        </div>
+      </div>
+     <div class="row" id="unsync-button">
+        <div class="span12">
+           <center> <a id="unsync-user" class="btn btn-green btn-large btn-success active"  data-link="modal" data-target="#signup-modal" style="text-align:center">Unsync User</a> </center>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span12">
+        <div id="dialog"><h2 id="unsync-text">Unsync Succesful</h2></div>
+        </div>
+      </div>
+    </div>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="unsync.js"></script>
+    </div> 
+  </body>
+</html>
