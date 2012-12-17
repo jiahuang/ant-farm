@@ -47,12 +47,12 @@ uint8_t data_array[30] = {
   };
 
 uint8_t current_payload = 0;
+uint8_t current_cycle = 0;
 
 // payload size of 8 for the colony, but only 2 are used
 uint8_t data_received[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 char UUID[UUID_SIZE] = { ID_1, ID_2 } ;
-
 // ~8 resets per minute to get total number of resets
 uint16_t interrupts_remaining = 8 * MINUTES_TO_RESET;
 
@@ -78,13 +78,13 @@ ISR(WDT_vect) {
     tx_send_command(0x27, (1 << RX_DR) | (1 << TX_DS) | (1 << MAX_RT));
 
     // pad with PAYLOAD_SIZE bytes
-    // for(int i = 0; i < PAYLOAD_SIZE; i++) {
-    //   data_array[current_payload*PAYLOAD_SIZE + i] = 0x00;
-    // }
-    // current_payload++;
+    for(int i = 0; i < PAYLOAD_SIZE; i++) {
+      data_array[current_payload*PAYLOAD_SIZE + i] = 0x00;
+    }
+    current_payload++;
 
     // check to see if we've hit max payload and transmit
-    // pong();
+    pong();
     
     if (--interrupts_remaining <= 0) {
 
